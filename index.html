@@ -376,26 +376,13 @@
             }
         }
     </style>
-    <script src="https://accounts.google.com/gsi/client"></script>
 </head>
 <body>
 <div class="container">
     <div class="header">
         <h1>⚽ Campionato</h1>
         <div id="loginSection" class="login-section">
-            <div id="g_id_onload"
-                 data-client_id="895388929631-c0p8rgui71cv1u48v9tcmrpolep8md68.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-size="large"
-                 data-theme="outline"
-                 data-text="sign_in_with"
-                 data-shape="rectangular"
-                 data-logo_alignment="left">
-            </div>
+            <button id="loginBtn" class="google-btn" style="background:#4285f4; color:white; border:none; padding:12px 24px; border-radius:60px; font-weight:600; cursor:pointer;">🔐 Accedi con Google</button>
             <div id="statusMsg" class="status"></div>
         </div>
         <div id="appContent" style="display: none;">
@@ -410,12 +397,13 @@
     <div id="classificaContainer" class="classifica"></div>
 </div>
 
+<script src="https://accounts.google.com/gsi/client"></script>
 <script>
     // -------------------- CONFIGURAZIONE --------------------
     const CLIENT_ID = "895388929631-c0p8rgui71cv1u48v9tcmrpolep8md68.apps.googleusercontent.com";
     const SPREADSHEET_ID = "1snyZWMtbDHwWeXzhMndw71BERV6KkL5p";
+    const SCOPES = "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file";
     
-    // Mappa nomi fogli Excel -> nome corretto
     const SHEET_NAMES = {
         classifica: "Giornate e Classifica",
         marcatori: "Classifica Marcatori",
@@ -454,11 +442,12 @@
     let isLoggedIn = false;
     let currentUser = null;
     let accessToken = null;
+    let tokenClient = null;
     
     let classificaSquadre = {};
-    let giocatoriMap = new Map();  // key: nome giocatore -> {gol, gialli, rossi, autogol, squadra, riga}
-    let portieriMap = new Map();   // key: nome portiere -> {gol_subiti, rigori_parati, rigori_gm_parati, gol_fatti, clean_sheet, squadra, riga}
-    let gmMap = new Map();         // key: nome GM -> {gol_fatti, rigori_tirati, rigori_sbagliati, squadra, riga}
+    let giocatoriMap = new Map();
+    let portieriMap = new Map();
+    let gmMap = new Map();
     let partiteSalvate = new Map();
 
     // -------------------- FUNZIONI API --------------------
@@ -503,7 +492,6 @@
     async function loadAllData() {
         showStatus("Caricamento dati dal foglio...", "loading");
         try {
-            // 1. Carica classifica
             const classificaData = await readSheet(SHEET_NAMES.classifica);
             if (classificaData.length > 1) {
                 for (let i = 1; i < classificaData.length && i <= SQUADRE.length; i++) {
@@ -524,7 +512,6 @@
                 }
             }
 
-            // 2. Carica giocatori (Classifica Marcatori)
             const marcatoriData = await readSheet(SHEET_NAMES.marcatori);
             if (marcatoriData.length > 1) {
                 for (let i = 1; i < marcatoriData.length; i++) {
@@ -545,7 +532,6 @@
                 }
             }
 
-            // 3. Carica portieri (Classifica Portieri)
             const portieriData = await readSheet(SHEET_NAMES.portieri);
             if (portieriData.length > 1) {
                 for (let i = 1; i < portieriData.length; i++) {
@@ -567,7 +553,6 @@
                 }
             }
 
-            // 4. Carica GM (Classifica GM)
             const gmData = await readSheet(SHEET_NAMES.gm);
             if (gmData.length > 1) {
                 for (let i = 1; i < gmData.length; i++) {
@@ -592,7 +577,7 @@
             render();
         } catch (error) {
             console.error("Errore caricamento:", error);
-            if (error.message.includes("403")) {
+            if (error.message.includes("403") || error.message.includes("invalid")) {
                 showStatus("⚠️ Non hai i permessi per accedere a questo foglio. Contatta l'amministratore.", "error");
                 document.getElementById("appContent").style.display = "none";
             } else {
@@ -649,7 +634,7 @@
 
     async function updateClassifica(squadra) {
         const c = classificaSquadre[squadra];
-        const riga = SQUADRE.indexOf(squadra) + 2; // +2 perché riga 1 è intestazione
+        const riga = SQUADRE.indexOf(squadra) + 2;
         await writeCell(SHEET_NAMES.classifica, riga, 1, c.punti);
         await writeCell(SHEET_NAMES.classifica, riga, 2, c.partite);
         await writeCell(SHEET_NAMES.classifica, riga, 3, c.vittorie);
@@ -700,7 +685,6 @@
     function applicaRisultatoPartita(home, away, goalHome, goalAway) {
         const cHome = classificaSquadre[home], cAway = classificaSquadre[away];
         
-        // Sottrai vecchi risultati se già salvati? Per ora assumiamo che la partita non sia ancora salvata
         cHome.gol_fatti += goalHome; cHome.gol_subiti += goalAway;
         cAway.gol_fatti += goalAway; cAway.gol_subiti += goalHome;
         cHome.partite++; cAway.partite++;
@@ -714,8 +698,8 @@
         cHome.diff_reti = cHome.gol_fatti - cHome.gol_subiti;
         cAway.diff_reti = cAway.gol_fatti - cAway.gol_subiti;
 
-        const portiereHome = portieriMap.get(Array.from(portieriMap.values()).find(p => p.squadra === home)?.nome);
-        const portiereAway = portieriMap.get(Array.from(portieriMap.values()).find(p => p.squadra === away)?.nome);
+        const portiereHome = Array.from(portieriMap.values()).find(p => p.squadra === home);
+        const portiereAway = Array.from(portieriMap.values()).find(p => p.squadra === away);
         
         if(portiereHome) {
             const newSubiti = (portiereHome.gol_subiti || 0) + goalAway;
@@ -736,7 +720,7 @@
         updateClassifica(away);
     }
 
-    // -------------------- RENDER (versione semplificata ma funzionante) --------------------
+    // -------------------- RENDER --------------------
     function renderTeamStats(squadra, prefix) {
         const giocatori = Array.from(giocatoriMap.values()).filter(g => g.squadra === squadra);
         const portiere = Array.from(portieriMap.values()).find(p => p.squadra === squadra);
@@ -967,10 +951,8 @@
                 const homeStats = raccogliStatisticheSquadra(matchDiv, home);
                 const awayStats = raccogliStatisticheSquadra(matchDiv, away);
                 
-                // Aggiorna classifica
                 applicaRisultatoPartita(home, away, homeGol, awayGol);
                 
-                // Aggiorna gol giocatori
                 for (const g of homeStats.giocatori) {
                     const player = giocatoriMap.get(g.nome);
                     if (player) await updateGiocatore(g.nome, "gol", player.gol + g.gol);
@@ -980,25 +962,23 @@
                     if (player) await updateGiocatore(g.nome, "gol", player.gol + g.gol);
                 }
                 
-                // Aggiorna GM
                 for (const g of homeStats.gm) {
-                    const gm = gmMap.get(g.nome);
-                    if (gm) {
-                        await updateGM(g.nome, "gol_fatti", gm.gol_fatti + g.gol);
-                        await updateGM(g.nome, "rigori_tirati", gm.rigori_tirati + g.rigoriTirati);
-                        await updateGM(g.nome, "rigori_sbagliati", gm.rigori_sbagliati + g.rigoriSbagliati);
+                    const gmItem = gmMap.get(g.nome);
+                    if (gmItem) {
+                        await updateGM(g.nome, "gol_fatti", gmItem.gol_fatti + g.gol);
+                        await updateGM(g.nome, "rigori_tirati", gmItem.rigori_tirati + g.rigoriTirati);
+                        await updateGM(g.nome, "rigori_sbagliati", gmItem.rigori_sbagliati + g.rigoriSbagliati);
                     }
                 }
                 for (const g of awayStats.gm) {
-                    const gm = gmMap.get(g.nome);
-                    if (gm) {
-                        await updateGM(g.nome, "gol_fatti", gm.gol_fatti + g.gol);
-                        await updateGM(g.nome, "rigori_tirati", gm.rigori_tirati + g.rigoriTirati);
-                        await updateGM(g.nome, "rigori_sbagliati", gm.rigori_sbagliati + g.rigoriSbagliati);
+                    const gmItem = gmMap.get(g.nome);
+                    if (gmItem) {
+                        await updateGM(g.nome, "gol_fatti", gmItem.gol_fatti + g.gol);
+                        await updateGM(g.nome, "rigori_tirati", gmItem.rigori_tirati + g.rigoriTirati);
+                        await updateGM(g.nome, "rigori_sbagliati", gmItem.rigori_sbagliati + g.rigoriSbagliati);
                     }
                 }
                 
-                // Aggiorna portieri
                 for (const p of homeStats.portieri) {
                     const portiere = portieriMap.get(p.nome);
                     if (portiere) {
@@ -1022,7 +1002,7 @@
                 resettaCampiSquadra(matchDiv, away);
                 saveBtn.disabled = true;
                 
-                await loadAllData(); // Ricarica tutti i dati per sincronizzare
+                await loadAllData();
                 render();
             };
         });
@@ -1049,32 +1029,51 @@
         }
     }
 
-    // -------------------- LOGIN CALLBACK --------------------
-    window.handleCredentialResponse = (response) => {
-        console.log("Login successo!");
-        const payload = JSON.parse(atob(response.credential.split('.')[1]));
-        currentUser = payload.email;
-        accessToken = response.credential;
-        
-        isLoggedIn = true;
-        
-        document.getElementById("loginSection").innerHTML = `
-            <div class="user-info">
-                <span>👤 ${currentUser}</span>
-                <button id="logoutBtn" class="logout-btn">🚪 Esci</button>
-            </div>
-            <div id="statusMsg" class="status"></div>
-        `;
-        document.getElementById("appContent").style.display = "block";
-        
-        document.getElementById("logoutBtn").addEventListener("click", () => {
-            isLoggedIn = false;
-            location.reload();
+    // -------------------- LOGIN CON TOKEN CLIENT --------------------
+    function initClient() {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: (tokenResponse) => {
+                if (tokenResponse.error) {
+                    showStatus("Errore login: " + tokenResponse.error, "error");
+                    return;
+                }
+                accessToken = tokenResponse.access_token;
+                
+                // Ottieni info utente
+                fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
+                    headers: { "Authorization": `Bearer ${accessToken}` }
+                })
+                .then(res => res.json())
+                .then(userInfo => {
+                    currentUser = userInfo.email;
+                    isLoggedIn = true;
+                    
+                    document.getElementById("loginSection").innerHTML = `
+                        <div class="user-info">
+                            <span>👤 ${currentUser}</span>
+                            <button id="logoutBtn" class="logout-btn">🚪 Esci</button>
+                        </div>
+                        <div id="statusMsg" class="status"></div>
+                    `;
+                    document.getElementById("appContent").style.display = "block";
+                    
+                    document.getElementById("logoutBtn").addEventListener("click", () => {
+                        isLoggedIn = false;
+                        location.reload();
+                    });
+                    
+                    initData();
+                    loadAllData();
+                });
+            },
         });
         
-        initData();
-        loadAllData();
-    };
+        document.getElementById("loginBtn").addEventListener("click", () => {
+            tokenClient.requestAccessToken({ prompt: "consent" });
+        });
+    }
 
     function initData() {
         SQUADRE.forEach(s => {
@@ -1094,6 +1093,8 @@
             loadAllData();
         }
     });
+    
+    initClient();
 </script>
 </body>
 </html>
