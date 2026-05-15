@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gestione Campionato</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f7fb;
+            padding: 16px;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid #e9eef3;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e2b3c, #2c4c6e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .giornata-selector {
+            display: flex;
+            gap: 12px;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin: 16px 0 8px;
+        }
+
+        select {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 60px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .reset-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 60px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .match-card {
+            background: white;
+            border-radius: 28px;
+            margin-bottom: 28px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            border: 1px solid #edf2f7;
+        }
+
+        .match-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .squadre {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .team-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fafc;
+            padding: 6px 16px;
+            border-radius: 60px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .team-badge.winner {
+            background-color: #dcfce7;
+            border-color: #22c55e;
+            color: #166534;
+        }
+
+        .team-badge.loser {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+
+        .team-logo {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: white;
+            padding: 4px;
+        }
+
+        .small-logo {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: white;
+            padding: 2px;
+        }
+
+        .vs {
+            color: #94a3b8;
+            font-weight: normal;
+        }
+
+        .risultato-control {
+            display: flex;
+            gap: 20px;
+            background: #f8fafc;
+            padding: 8px 16px;
+            border-radius: 60px;
+        }
+
+        .goal-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .goal-control button {
+            background: white;
+            border: 1px solid #cbd5e1;
+            width: 36px;
+            height: 36px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .goal-control span {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .team-section {
+            margin-top: 24px;
+            border-top: 2px dashed #eef2f8;
+            padding-top: 16px;
+        }
+
+        .team-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .players-list, .keeper-card, .gm-list {
+            background: #f9fbfd;
+            border-radius: 24px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .player-row, .keeper-row, .gm-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eef2f8;
+        }
+
+        .player-name {
+            flex: 2;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .stat-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-control button {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: bold;
+            width: 28px;
+            cursor: pointer;
+            color: #3b82f6;
+        }
+
+        .stat-control span {
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .icon-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 6px 12px;
+            transition: 0.1s;
+            min-width: 48px;
+            text-align: center;
+        }
+
+        .icon-btn:hover {
+            background: #e2e8f0;
+            transform: scale(1.02);
+        }
+
+        .badge {
+            background: white;
+            border-radius: 40px;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .save-btn {
+            background: #22c55e;
+            color: white;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            margin-left: auto;
+            transition: 0.1s;
+        }
+
+        .save-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .classifica {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .classifica table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+
+        .classifica th, .classifica td {
+            padding: 8px 4px;
+            text-align: center;
+        }
+
+        .gm-logo {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 650px) {
+            .stat-control button {
+                width: 24px;
+            }
+            .team-badge {
+                padding: 4px 10px;
+            }
+            .team-logo {
+                width: 28px;
+                height: 28px;
+            }
+            .small-logo {
+                width: 24px;
+                height: 24px;
+            }
+            .icon-btn {
+                padding: 4px 8px;
+                font-size: 1rem;
+                min-width: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>⚽ Campionato</h1>
+        <div class="giornata-selector">
+            <label>📅 Giornata:</label>
+            <select id="giornataSelect"></select>
+            <button id="resetBtn" class="reset-btn">⟳ Reset totale</button>
+        </div>
+    </div>
+    <div id="partiteContainer"></div>
+    <div id="classificaContainer" class="classifica"></div>
+</div>
+
+<script>
+    // -------------------- DATI COMPLETI --------------------
+    const SQUADRE = [
+        "Goal Diggers", "Zambo Venom", "Tuorlo Sodo", "LG Warriors",
+        "Iubisoft", "Super Sonic", "Cavalli Pazzi", "Lotta Tigres"
+    ];
+
+    // Loghi veri
+    const teamLogos = {
+        "Super Sonic": "https://img.sanishtech.com/u/c0afc04100c0fa2322be4116a2ab1cd2.png",
+        "Zambo Venom": "https://img.sanishtech.com/u/10ee780754424b901269babe036a17aa.png",
+        "Iubisoft": "https://img.sanishtech.com/u/2ce5e41058b405c289cdfef556ff3e7e.png",
+        "LG Warriors": "https://img.sanishtech.com/u/3c013694947e0456feea4ec1e2f7c74a.png",
+        "Cavalli Pazzi": "https://img.sanishtech.com/u/24dec9c7100344a5e65256668a5dff78.png",
+        "Goal Diggers": "https://img.sanishtech.com/u/f226d3b4f1c0462c4fd47ec77b7daa2c.png",
+        "Lotta Tigres": "https://img.sanishtech.com/u/c39a4d895a2f044e5b464bd09880f283.jpg",
+        "Tuorlo Sodo": "https://img.sanishtech.com/u/1c88463c766aecf1485b3bb0b0cab131.jpg"
+    };
+
+    const calendario = {
+        1: [{ home: "Lotta Tigres", away: "Super Sonic" }, { home: "Goal Diggers", away: "Zambo Venom" }, { home: "LG Warriors", away: "Tuorlo Sodo" }, { home: "Iubisoft", away: "Cavalli Pazzi" }],
+        2: [{ home: "Iubisoft", away: "Goal Diggers" }, { home: "Zambo Venom", away: "Super Sonic" }, { home: "Lotta Tigres", away: "Tuorlo Sodo" }, { home: "Cavalli Pazzi", away: "LG Warriors" }],
+        3: [{ home: "Zambo Venom", away: "Tuorlo Sodo" }, { home: "LG Warriors", away: "Lotta Tigres" }, { home: "Super Sonic", away: "Iubisoft" }, { home: "Goal Diggers", away: "Cavalli Pazzi" }],
+        4: [{ home: "LG Warriors", away: "Iubisoft" }, { home: "Goal Diggers", away: "Super Sonic" }, { home: "Tuorlo Sodo", away: "Cavalli Pazzi" }, { home: "Lotta Tigres", away: "Zambo Venom" }],
+        5: [{ home: "LG Warriors", away: "Super Sonic" }, { home: "Tuorlo Sodo", away: "Goal Diggers" }, { home: "Iubisoft", away: "Lotta Tigres" }, { home: "Cavalli Pazzi", away: "Zambo Venom" }],
+        6: [{ home: "Tuorlo Sodo", away: "Iubisoft" }, { home: "Goal Diggers", away: "Lotta Tigres" }, { home: "LG Warriors", away: "Zambo Venom" }, { home: "Super Sonic", away: "Cavalli Pazzi" }],
+        7: [{ home: "Goal Diggers", away: "LG Warriors" }, { home: "Super Sonic", away: "Tuorlo Sodo" }, { home: "Iubisoft", away: "Zambo Venom" }, { home: "Lotta Tigres", away: "Cavalli Pazzi" }]
+    };
+
+    const marcatoriRaw = [
+        { nome: "Davide Paoloni", squadra: "Goal Diggers", gol: 18, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Samuele Bertino", squadra: "LG Warriors", gol: 15, gialli: 0, rossi: 0, autogol: 1 },
+        { nome: "Pietro Crosta", squadra: "Zambo Venom", gol: 15, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Luca Franco", squadra: "Cavalli Pazzi", gol: 10, gialli: 1, rossi: 0, autogol: 0 },
+        { nome: "Andrea Caiazzo", squadra: "Zambo Venom", gol: 10, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Lapo Tapinassi", squadra: "Iubisoft", gol: 10, gialli: 1, rossi: 0, autogol: 1 },
+        { nome: "Mattia Reggio d'Aci", squadra: "Super Sonic", gol: 9, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Carlo Silenzi", squadra: "Lotta Tigres", gol: 9, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Federico Gerlach", squadra: "Tuorlo Sodo", gol: 9, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Biagio Gangarossa", squadra: "LG Warriors", gol: 8, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Giosuè Pinto", squadra: "Super Sonic", gol: 7, gialli: 0, rossi: 0, autogol: 1 },
+        { nome: "Giuseppe Barberi", squadra: "Cavalli Pazzi", gol: 6, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Pierpaolo Romano", squadra: "Tuorlo Sodo", gol: 6, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Leonardo Ballista", squadra: "LG Warriors", gol: 6, gialli: 0, rossi: 0, autogol: 1 },
+        { nome: "Filippo Toracchio", squadra: "Iubisoft", gol: 5, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Giuliano Guido", squadra: "Super Sonic", gol: 5, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Salvatore Gaetani", squadra: "Goal Diggers", gol: 4, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Luca Montaresi", squadra: "Iubisoft", gol: 4, gialli: 1, rossi: 0, autogol: 0 },
+        { nome: "Leonardo Marras", squadra: "Super Sonic", gol: 3, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Enrico Guerrini", squadra: "Tuorlo Sodo", gol: 3, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Alessandro Bottazzi", squadra: "Goal Diggers", gol: 3, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Francesco Buscemi", squadra: "Goal Diggers", gol: 3, gialli: 1, rossi: 0, autogol: 0 },
+        { nome: "Matteo Soro", squadra: "Tuorlo Sodo", gol: 3, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Mario Gazzaneo", squadra: "Cavalli Pazzi", gol: 3, gialli: 0, rossi: 0, autogol: 1 },
+        { nome: "Giuseppe Dovì", squadra: "Lotta Tigres", gol: 2, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Giuseppe Fiorentino", squadra: "Lotta Tigres", gol: 2, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Aldo Tarantino", squadra: "Iubisoft", gol: 2, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Giuseppe Gargano", squadra: "Iubisoft", gol: 1, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Alberto Cifelli", squadra: "Zambo Venom", gol: 1, gialli: 1, rossi: 0, autogol: 0 },
+        { nome: "Enrico Lastella", squadra: "Lotta Tigres", gol: 1, gialli: 0, rossi: 0, autogol: 0 }
+    ];
+
+    const portieriRaw = [
+        { nome: "Luca Devalle", squadra: "Goal Diggers", gol_subiti: 18, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 3, clean_sheet: 0 },
+        { nome: "John Perrino", squadra: "Zambo Venom", gol_subiti: 19, rigori_parati: 0, rigori_gm_parati: 1, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Flavio Spadaro", squadra: "Super Sonic", gol_subiti: 22, rigori_parati: 1, rigori_gm_parati: 1, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Alessandro Gadaleta", squadra: "Tuorlo Sodo", gol_subiti: 23, rigori_parati: 0, rigori_gm_parati: 3, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Alessio De Angelis", squadra: "Iubisoft", gol_subiti: 25, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Stefano Marchetti", squadra: "Cavalli Pazzi", gol_subiti: 25, rigori_parati: 0, rigori_gm_parati: 1, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Mattia D'Andria", squadra: "Lotta Tigres", gol_subiti: 29, rigori_parati: 0, rigori_gm_parati: 2, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Luigi Baldi", squadra: "LG Warriors", gol_subiti: 43, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 }
+    ];
+
+    const gmRaw = [
+        { nome: "Mihret Coccioli", squadra: "Super Sonic", gol_fatti: 2, rigori_sbagliati: 0, rigori_tirati: 2 },
+        { nome: "Sophia Angiola", squadra: "Cavalli Pazzi", gol_fatti: 1, rigori_sbagliati: 1, rigori_tirati: 2 },
+        { nome: "Laura Grande", squadra: "LG Warriors", gol_fatti: 1, rigori_sbagliati: 2, rigori_tirati: 3 },
+        { nome: "Chiara Soro", squadra: "Tuorlo Sodo", gol_fatti: 1, rigori_sbagliati: 4, rigori_tirati: 5 },
+        { nome: "Matilde Cameroni", squadra: "Iubisoft", gol_fatti: 0, rigori_sbagliati: 1, rigori_tirati: 1 },
+        { nome: "Flavia D'Avino", squadra: "Goal Diggers", gol_fatti: 0, rigori_sbagliati: 1, rigori_tirati: 1 },
+        { nome: "Giulia Giorgiutti", squadra: "Zambo Venom", gol_fatti: 1, rigori_sbagliati: 2, rigori_tirati: 3 },
+        { nome: "Giorgia Gambino", squadra: "Lotta Tigres", gol_fatti: 0, rigori_sbagliati: 1, rigori_tirati: 1 }
+    ];
+
+    // -------------------- STATO GLOBALE --------------------
+    let classificaSquadre = {};
+    let giocatoriMap = new Map();
+    let portieriMap = new Map();
+    let gmMap = new Map();
+    let partiteSalvate = new Map();
+
+    function initData() {
+        SQUADRE.forEach(s => {
+            classificaSquadre[s] = {
+                punti: 0, partite: 0, vittorie: 0, pareggi: 0, sconfitte: 0,
+                gol_fatti: 0, gol_subiti: 0, diff_reti: 0
+            };
+        });
+        marcatoriRaw.forEach(g => giocatoriMap.set(g.nome, { ...g }));
+        portieriRaw.forEach(p => portieriMap.set(p.nome, { ...p }));
+        gmRaw.forEach(g => gmMap.set(g.nome, { ...g }));
+        partiteSalvate.clear();
+    }
+
+    function saveState() {
+        const state = {
+            classifica: classificaSquadre,
+            giocatori: Array.from(giocatoriMap.entries()),
+            portieri: Array.from(portieriMap.entries()),
+            gm: Array.from(gmMap.entries()),
+            partiteSalvate: Array.from(partiteSalvate.entries())
+        };
+        localStorage.setItem("campionatoState", JSON.stringify(state));
+    }
+
+    function loadState() {
+        const saved = localStorage.getItem("campionatoState");
+        if (!saved) return false;
+        try {
+            const state = JSON.parse(saved);
+            classificaSquadre = state.classifica;
+            giocatoriMap = new Map(state.giocatori);
+            portieriMap = new Map(state.portieri);
+            gmMap = new Map(state.gm);
+            partiteSalvate = new Map(state.partiteSalvate);
+            return true;
+        } catch(e) { return false; }
+    }
+
+    function resetToOriginal() {
+        initData();
+        saveState();
+        render();
+    }
+
+    function aggiungiGolGiocatore(nome, delta) {
+        let g = giocatoriMap.get(nome);
+        if(g) { g.gol = Math.max(0, g.gol + delta); giocatoriMap.set(nome, g); saveState(); render(); }
+    }
+
+    function aggiungiCartellino(nome, tipo) {
+        let g = giocatoriMap.get(nome);
+        if(g) {
+            if(tipo === 'giallo') g.gialli++;
+            if(tipo === 'rosso') g.rossi++;
+            if(tipo === 'autogol') g.autogol++;
+            giocatoriMap.set(nome, g); saveState(); render();
+        }
+    }
+
+    function aggiungiStatGM(nome, field, delta) {
+        let gm = gmMap.get(nome);
+        if(gm) { gm[field] = Math.max(0, gm[field] + delta); gmMap.set(nome, gm); saveState(); render(); }
+    }
+
+    function aggiungiStatPortiere(nome, field, delta) {
+        let p = portieriMap.get(nome);
+        if(p) { p[field] = Math.max(0, p[field] + delta); portieriMap.set(nome, p); saveState(); render(); }
+    }
+
+    function applicaRisultatoPartita(home, away, goalHome, goalAway) {
+        const cHome = classificaSquadre[home], cAway = classificaSquadre[away];
+        cHome.gol_fatti += goalHome; cHome.gol_subiti += goalAway;
+        cAway.gol_fatti += goalAway; cAway.gol_subiti += goalHome;
+        cHome.partite++; cAway.partite++;
+        if(goalHome > goalAway) { cHome.vittorie++; cAway.sconfitte++; }
+        else if(goalAway > goalHome) { cAway.vittorie++; cHome.sconfitte++; }
+        else { cHome.pareggi++; cAway.pareggi++; }
+        cHome.punti = cHome.vittorie*3 + cHome.pareggi;
+        cAway.punti = cAway.vittorie*3 + cAway.pareggi;
+        cHome.diff_reti = cHome.gol_fatti - cHome.gol_subiti;
+        cAway.diff_reti = cAway.gol_fatti - cAway.gol_subiti;
+
+        const portiereHome = Array.from(portieriMap.values()).find(p => p.squadra === home);
+        const portiereAway = Array.from(portieriMap.values()).find(p => p.squadra === away);
+        if(portiereHome) portiereHome.gol_subiti = (portiereHome.gol_subiti || 0) + goalAway;
+        if(portiereAway) portiereAway.gol_subiti = (portiereAway.gol_subiti || 0) + goalHome;
+        if(goalAway === 0 && portiereHome) portiereHome.clean_sheet = (portiereHome.clean_sheet || 0) + 1;
+        if(goalHome === 0 && portiereAway) portiereAway.clean_sheet = (portiereAway.clean_sheet || 0) + 1;
+    }
+
+    // -------------------- RENDER --------------------
+    function render() {
+        const giornata = parseInt(document.getElementById("giornataSelect").value);
+        const partite = calendario[giornata];
+        const container = document.getElementById("partiteContainer");
+        container.innerHTML = "";
+
+        partite.forEach((p, idx) => {
+            const home = p.home, away = p.away;
+            const alreadySaved = partiteSalvate.has(`${giornata}_${idx}`);
+            const matchDiv = document.createElement("div");
+            matchDiv.className = "match-card";
+            matchDiv.innerHTML = `
+                <div class="match-header">
+                    <div class="squadre">
+                        <div class="team-badge" data-team="${home}">
+                            <img class="team-logo" src="${teamLogos[home]}" alt="${home}" onerror="this.style.display='none'">
+                            <span>${home}</span>
+                        </div>
+                        <span class="vs">VS</span>
+                        <div class="team-badge" data-team="${away}">
+                            <img class="team-logo" src="${teamLogos[away]}" alt="${away}" onerror="this.style.display='none'">
+                            <span>${away}</span>
+                        </div>
+                    </div>
+                    <div class="risultato-control">
+                        <div class="goal-control"><button class="home-dec">-</button><span class="home-goal">0</span><button class="home-inc">+</button><span>🏠</span></div>
+                        <div class="goal-control"><button class="away-dec">-</button><span class="away-goal">0</span><button class="away-inc">+</button><span>✈️</span></div>
+                    </div>
+                </div>
+                <div class="team-section"><div class="team-name"><img class="small-logo" src="${teamLogos[home]}" alt="${home}" onerror="this.style.display='none'"> ${home}</div>${renderTeamStats(home, `${giornata}_${idx}_home`)}</div>
+                <div class="team-section"><div class="team-name"><img class="small-logo" src="${teamLogos[away]}" alt="${away}" onerror="this.style.display='none'"> ${away}</div>${renderTeamStats(away, `${giornata}_${idx}_away`)}</div>
+                <button class="save-btn" ${alreadySaved ? 'disabled' : ''}>✓</button>
+            `;
+            container.appendChild(matchDiv);
+
+            const homeGoalSpan = matchDiv.querySelector(".home-goal");
+            const awayGoalSpan = matchDiv.querySelector(".away-goal");
+            const homeInc = matchDiv.querySelector(".home-inc");
+            const homeDec = matchDiv.querySelector(".home-dec");
+            const awayInc = matchDiv.querySelector(".away-inc");
+            const awayDec = matchDiv.querySelector(".away-dec");
+            const homeBadge = matchDiv.querySelector(`.team-badge[data-team="${home}"]`);
+            const awayBadge = matchDiv.querySelector(`.team-badge[data-team="${away}"]`);
+
+            let homeGol = 0, awayGol = 0;
+            const updateUI = () => {
+                homeGoalSpan.innerText = homeGol;
+                awayGoalSpan.innerText = awayGol;
+                if (homeGol > awayGol) {
+                    homeBadge.classList.add("winner");
+                    homeBadge.classList.remove("loser");
+                    awayBadge.classList.add("loser");
+                    awayBadge.classList.remove("winner");
+                } else if (awayGol > homeGol) {
+                    awayBadge.classList.add("winner");
+                    awayBadge.classList.remove("loser");
+                    homeBadge.classList.add("loser");
+                    homeBadge.classList.remove("winner");
+                } else {
+                    homeBadge.classList.remove("winner", "loser");
+                    awayBadge.classList.remove("winner", "loser");
+                }
+            };
+            homeInc.onclick = () => { homeGol++; updateUI(); };
+            homeDec.onclick = () => { if(homeGol>0) homeGol--; updateUI(); };
+            awayInc.onclick = () => { awayGol++; updateUI(); };
+            awayDec.onclick = () => { if(awayGol>0) awayGol--; updateUI(); };
+            updateUI();
+
+            const saveBtn = matchDiv.querySelector(".save-btn");
+            saveBtn.onclick = () => {
+                if(partiteSalvate.has(`${giornata}_${idx}`)) { alert("Partita già salvata!"); return; }
+                const homeStats = raccogliStatisticheSquadra(matchDiv, home);
+                const awayStats = raccogliStatisticheSquadra(matchDiv, away);
+                applicaRisultatoPartita(home, away, homeGol, awayGol);
+                homeStats.giocatori.forEach(g => aggiungiGolGiocatore(g.nome, g.gol));
+                awayStats.giocatori.forEach(g => aggiungiGolGiocatore(g.nome, g.gol));
+                homeStats.cartellini.forEach(c => aggiungiCartellino(c.nome, c.tipo));
+                awayStats.cartellini.forEach(c => aggiungiCartellino(c.nome, c.tipo));
+                homeStats.gm.forEach(gm => { aggiungiStatGM(gm.nome, "gol_fatti", gm.gol); aggiungiStatGM(gm.nome, "rigori_tirati", gm.rigoriTirati); aggiungiStatGM(gm.nome, "rigori_sbagliati", gm.rigoriSbagliati); });
+                awayStats.gm.forEach(gm => { aggiungiStatGM(gm.nome, "gol_fatti", gm.gol); aggiungiStatGM(gm.nome, "rigori_tirati", gm.rigoriTirati); aggiungiStatGM(gm.nome, "rigori_sbagliati", gm.rigoriSbagliati); });
+                homeStats.portieri.forEach(p => { aggiungiStatPortiere(p.nome, "rigori_parati", p.rigoriParati); aggiungiStatPortiere(p.nome, "rigori_gm_parati", p.rigoriGmParati); aggiungiStatPortiere(p.nome, "gol_fatti", p.golFatti); });
+                awayStats.portieri.forEach(p => { aggiungiStatPortiere(p.nome, "rigori_parati", p.rigoriParati); aggiungiStatPortiere(p.nome, "rigori_gm_parati", p.rigoriGmParati); aggiungiStatPortiere(p.nome, "gol_fatti", p.golFatti); });
+
+                partiteSalvate.set(`${giornata}_${idx}`, true);
+                saveState();
+                homeGol = 0; awayGol = 0; updateUI();
+                resettaCampiSquadra(matchDiv, home);
+                resettaCampiSquadra(matchDiv, away);
+                saveBtn.disabled = true;
+                render();
+            };
+        });
+        renderClassifica();
+    }
+
+    function renderTeamStats(squadra, prefix) {
+        const giocatori = Array.from(giocatoriMap.values()).filter(g => g.squadra === squadra);
+        const portiere = Array.from(portieriMap.values()).find(p => p.squadra === squadra);
+        const gm = Array.from(gmMap.values()).find(g => g.squadra === squadra);
+        let html = `<div class="players-list"><strong>⚽ Giocatori</strong>`;
+        giocatori.forEach(g => {
+            html += `<div class="player-row" data-team="${prefix}">
+                <span class="player-name">${g.nome}</span>
+                <div class="stat-control">
+                    <button class="player-gol-dec" data-player="${g.nome}" data-prefix="${prefix}">-</button>
+                    <span class="player-gol-val" data-player="${g.nome}" data-prefix="${prefix}">0</span>
+                    <button class="player-gol-inc" data-player="${g.nome}" data-prefix="${prefix}">+</button>
+                    <span>Gol</span>
+                </div>
+                <button class="icon-btn" data-player="${g.nome}" data-card="giallo" data-prefix="${prefix}" title="Cartellino Giallo">🟨</button>
+                <button class="icon-btn" data-player="${g.nome}" data-card="rosso" data-prefix="${prefix}" title="Cartellino Rosso">🟥</button>
+                <button class="icon-btn" data-player="${g.nome}" data-card="autogol" data-prefix="${prefix}" title="Autogol">🔄🥅</button>
+                <span class="badge">🟨${g.gialli} 🟥${g.rossi} OG${g.autogol}</span>
+            </div>`;
+        });
+        html += `</div>`;
+        if(portiere) {
+            html += `<div class="keeper-card" data-team="${prefix}"><strong>🧤 Portiere: ${portiere.nome}</strong>
+                <div class="keeper-row">
+                    <div class="stat-control">
+                        <button class="portiere-dec" data-portiere="${portiere.nome}" data-field="rigori_parati" data-prefix="${prefix}">-</button>
+                        <span class="portiere-val" data-field="rigori_parati" data-portiere="${portiere.nome}" data-prefix="${prefix}">0</span>
+                        <button class="portiere-inc" data-portiere="${portiere.nome}" data-field="rigori_parati" data-prefix="${prefix}">+</button>
+                        <span>Rigori parati</span>
+                    </div>
+                    <div class="stat-control">
+                        <button class="portiere-dec" data-portiere="${portiere.nome}" data-field="rigori_gm_parati" data-prefix="${prefix}">-</button>
+                        <span class="portiere-val" data-field="rigori_gm_parati" data-portiere="${portiere.nome}" data-prefix="${prefix}">0</span>
+                        <button class="portiere-inc" data-portiere="${portiere.nome}" data-field="rigori_gm_parati" data-prefix="${prefix}">+</button>
+                        <span>Rigori GM parati</span>
+                    </div>
+                    <div class="stat-control">
+                        <button class="portiere-dec" data-portiere="${portiere.nome}" data-field="gol_fatti" data-prefix="${prefix}">-</button>
+                        <span class="portiere-val" data-field="gol_fatti" data-portiere="${portiere.nome}" data-prefix="${prefix}">0</span>
+                        <button class="portiere-inc" data-portiere="${portiere.nome}" data-field="gol_fatti" data-prefix="${prefix}">+</button>
+                        <span>Gol fatti</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+        if(gm) {
+            html += `<div class="gm-list" data-team="${prefix}"><strong><span class="gm-logo">🎀</span> GM: ${gm.nome}</strong>
+                <div class="gm-row">
+                    <div class="stat-control">
+                        <button class="gm-dec" data-gm="${gm.nome}" data-field="gol_fatti" data-prefix="${prefix}">-</button>
+                        <span class="gm-val" data-field="gol_fatti" data-gm="${gm.nome}" data-prefix="${prefix}">0</span>
+                        <button class="gm-inc" data-gm="${gm.nome}" data-field="gol_fatti" data-prefix="${prefix}">+</button>
+                        <span>Gol fatti</span>
+                    </div>
+                    <div class="stat-control">
+                        <button class="gm-dec" data-gm="${gm.nome}" data-field="rigori_tirati" data-prefix="${prefix}">-</button>
+                        <span class="gm-val" data-field="rigori_tirati" data-gm="${gm.nome}" data-prefix="${prefix}">0</span>
+                        <button class="gm-inc" data-gm="${gm.nome}" data-field="rigori_tirati" data-prefix="${prefix}">+</button>
+                        <span>Rigori tirati</span>
+                    </div>
+                    <div class="stat-control">
+                        <button class="gm-dec" data-gm="${gm.nome}" data-field="rigori_sbagliati" data-prefix="${prefix}">-</button>
+                        <span class="gm-val" data-field="rigori_sbagliati" data-gm="${gm.nome}" data-prefix="${prefix}">0</span>
+                        <button class="gm-inc" data-gm="${gm.nome}" data-field="rigori_sbagliati" data-prefix="${prefix}">+</button>
+                        <span>Rigori sbagliati</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+        return html;
+    }
+
+    function raccogliStatisticheSquadra(matchDiv, squadra) {
+        const sections = matchDiv.querySelectorAll('.team-section');
+        let targetSection = null;
+        for(let sec of sections) {
+            if(sec.querySelector('.team-name')?.innerText.includes(squadra)) {
+                targetSection = sec;
+                break;
+            }
+        }
+        if(!targetSection) return { giocatori: [], cartellini: [], gm: [], portieri: [] };
+        const giocatori = [];
+        targetSection.querySelectorAll('.player-row').forEach(row => {
+            const nome = row.querySelector('.player-gol-inc')?.dataset.player;
+            if(nome) {
+                const golSpan = row.querySelector('.player-gol-val');
+                const gol = parseInt(golSpan?.innerText || '0');
+                if(gol>0) giocatori.push({ nome, gol });
+            }
+        });
+        const cartellini = [];
+        const gm = [];
+        const gmRow = targetSection.querySelector('.gm-list');
+        if(gmRow) {
+            const nome = gmRow.querySelector('.gm-inc')?.dataset.gm;
+            if(nome) {
+                const gol = parseInt(gmRow.querySelector('.gm-val[data-field="gol_fatti"]')?.innerText || '0');
+                const rigoriTirati = parseInt(gmRow.querySelector('.gm-val[data-field="rigori_tirati"]')?.innerText || '0');
+                const rigoriSbagliati = parseInt(gmRow.querySelector('.gm-val[data-field="rigori_sbagliati"]')?.innerText || '0');
+                gm.push({ nome, gol: gol, rigoriTirati, rigoriSbagliati });
+            }
+        }
+        const portieri = [];
+        const keeperRow = targetSection.querySelector('.keeper-card');
+        if(keeperRow) {
+            const nome = keeperRow.querySelector('.portiere-inc')?.dataset.portiere;
+            if(nome) {
+                const rigoriParati = parseInt(keeperRow.querySelector('.portiere-val[data-field="rigori_parati"]')?.innerText || '0');
+                const rigoriGmParati = parseInt(keeperRow.querySelector('.portiere-val[data-field="rigori_gm_parati"]')?.innerText || '0');
+                const golFatti = parseInt(keeperRow.querySelector('.portiere-val[data-field="gol_fatti"]')?.innerText || '0');
+                portieri.push({ nome, rigoriParati, rigoriGmParati, golFatti });
+            }
+        }
+        return { giocatori, cartellini, gm, portieri };
+    }
+
+    function resettaCampiSquadra(matchDiv, squadra) {
+        const sections = matchDiv.querySelectorAll('.team-section');
+        let targetSection = null;
+        for(let sec of sections) {
+            if(sec.querySelector('.team-name')?.innerText.includes(squadra)) {
+                targetSection = sec;
+                break;
+            }
+        }
+        if(!targetSection) return;
+        targetSection.querySelectorAll('.player-gol-val').forEach(span => span.innerText = '0');
+        targetSection.querySelectorAll('.gm-val').forEach(span => span.innerText = '0');
+        targetSection.querySelectorAll('.portiere-val').forEach(span => span.innerText = '0');
+    }
+
+    function renderClassifica() {
+        const sorted = SQUADRE.map(s => ({ nome: s, ...classificaSquadre[s] }))
+            .sort((a,b) => b.punti - a.punti || b.diff_reti - a.diff_reti);
+        const container = document.getElementById("classificaContainer");
+        container.innerHTML = `
+            <h3>📊 Classifica</h3>
+            <table>
+                <thead><tr><th>Squadra</th><th>Pti</th><th>G</th><th>V</th><th>N</th><th>S</th><th>GF</th><th>GS</th><th>DR</th></table></thead>
+                <tbody>
+                    ${sorted.map(s => `<tr><td style="text-align:left">${s.nome}</td><td>${s.punti}</td><td>${s.partite}</td><td>${s.vittorie}</td><td>${s.pareggi}</td><td>${s.sconfitte}</td><td>${s.gol_fatti}</td><td>${s.gol_subiti}</td><td>${s.diff_reti}</td>`).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    function populateGiornate() {
+        const select = document.getElementById("giornataSelect");
+        for(let i=1; i<=7; i++) {
+            const opt = document.createElement("option");
+            opt.value = i;
+            opt.innerText = `Giornata ${i}`;
+            select.appendChild(opt);
+        }
+        select.addEventListener("change", () => render());
+    }
+
+    // Event delegation
+    document.addEventListener("click", (e) => {
+        const target = e.target;
+        if(target.classList.contains("player-gol-inc")) {
+            const player = target.dataset.player;
+            aggiungiGolGiocatore(player, 1);
+            const span = target.parentElement.querySelector('.player-gol-val');
+            if(span) span.innerText = '0';
+        } else if(target.classList.contains("player-gol-dec")) {
+            const player = target.dataset.player;
+            aggiungiGolGiocatore(player, -1);
+            const span = target.parentElement.querySelector('.player-gol-val');
+            if(span) span.innerText = '0';
+        } else if(target.classList.contains("icon-btn") && target.dataset.player) {
+            const player = target.dataset.player;
+            const card = target.dataset.card;
+            aggiungiCartellino(player, card);
+        } else if(target.classList.contains("gm-inc")) {
+            const gm = target.dataset.gm;
+            const field = target.dataset.field;
+            aggiungiStatGM(gm, field, 1);
+            const span = target.parentElement.querySelector('.gm-val');
+            if(span) span.innerText = '0';
+        } else if(target.classList.contains("gm-dec")) {
+            const gm = target.dataset.gm;
+            const field = target.dataset.field;
+            aggiungiStatGM(gm, field, -1);
+            const span = target.parentElement.querySelector('.gm-val');
+            if(span) span.innerText = '0';
+        } else if(target.classList.contains("portiere-inc")) {
+            const portiere = target.dataset.portiere;
+            const field = target.dataset.field;
+            aggiungiStatPortiere(portiere, field, 1);
+            const span = target.parentElement.querySelector('.portiere-val');
+            if(span) span.innerText = '0';
+        } else if(target.classList.contains("portiere-dec")) {
+            const portiere = target.dataset.portiere;
+            const field = target.dataset.field;
+            aggiungiStatPortiere(portiere, field, -1);
+            const span = target.parentElement.querySelector('.portiere-val');
+            if(span) span.innerText = '0';
+        }
+    });
+
+    if(!loadState()) initData();
+    populateGiornate();
+    render();
+    document.getElementById("resetBtn").addEventListener("click", resetToOriginal);
+</script>
+</body>
+</html>
