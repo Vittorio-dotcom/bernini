@@ -64,18 +64,13 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            font-size: 1rem;
         }
 
         .user-info {
             display: flex;
             align-items: center;
             gap: 12px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
         }
 
         .logout-btn {
@@ -361,11 +356,6 @@
             font-size: 1.2rem;
         }
 
-        .disabled-overlay {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
         @media (max-width: 650px) {
             .stat-control button {
                 width: 24px;
@@ -388,7 +378,8 @@
             }
         }
     </style>
-    <!-- Google API Client Library -->
+    <!-- Google Identity Services e API Client -->
+    <script src="https://accounts.google.com/gsi/client"></script>
     <script src="https://apis.google.com/js/api.js"></script>
 </head>
 <body>
@@ -417,7 +408,7 @@
     const SPREADSHEET_ID = "1snyZWMtbDHwWeXzhMndw71BERV6KkL5p";
     const SCOPES = "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file";
     
-    // -------------------- DATI STATICI (usati come fallback) --------------------
+    // -------------------- DATI STATICI --------------------
     const SQUADRE = [
         "Goal Diggers", "Zambo Venom", "Tuorlo Sodo", "LG Warriors",
         "Iubisoft", "Super Sonic", "Cavalli Pazzi", "Lotta Tigres"
@@ -444,10 +435,64 @@
         7: [{ home: "Goal Diggers", away: "LG Warriors" }, { home: "Super Sonic", away: "Tuorlo Sodo" }, { home: "Iubisoft", away: "Zambo Venom" }, { home: "Lotta Tigres", away: "Cavalli Pazzi" }]
     };
 
+    const marcatoriRaw = [
+        { nome: "Davide Paoloni", squadra: "Goal Diggers", gol: 18, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Samuele Bertino", squadra: "LG Warriors", gol: 15, gialli: 0, rossi: 0, autogol: 1 },
+        { nome: "Pietro Crosta", squadra: "Zambo Venom", gol: 15, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Luca Franco", squadra: "Cavalli Pazzi", gol: 10, gialli: 1, rossi: 0, autogol: 0 },
+        { nome: "Andrea Caiazzo", squadra: "Zambo Venom", gol: 10, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Lapo Tapinassi", squadra: "Iubisoft", gol: 10, gialli: 1, rossi: 0, autogol: 1 },
+        { nome: "Mattia Reggio d'Aci", squadra: "Super Sonic", gol: 9, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Carlo Silenzi", squadra: "Lotta Tigres", gol: 9, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Federico Gerlach", squadra: "Tuorlo Sodo", gol: 9, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Biagio Gangarossa", squadra: "LG Warriors", gol: 8, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Giosuè Pinto", squadra: "Super Sonic", gol: 7, gialli: 0, rossi: 0, autogol: 1 },
+        { nome: "Giuseppe Barberi", squadra: "Cavalli Pazzi", gol: 6, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Pierpaolo Romano", squadra: "Tuorlo Sodo", gol: 6, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Leonardo Ballista", squadra: "LG Warriors", gol: 6, gialli: 0, rossi: 0, autogol: 1 },
+        { nome: "Filippo Toracchio", squadra: "Iubisoft", gol: 5, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Giuliano Guido", squadra: "Super Sonic", gol: 5, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Salvatore Gaetani", squadra: "Goal Diggers", gol: 4, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Luca Montaresi", squadra: "Iubisoft", gol: 4, gialli: 1, rossi: 0, autogol: 0 },
+        { nome: "Leonardo Marras", squadra: "Super Sonic", gol: 3, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Enrico Guerrini", squadra: "Tuorlo Sodo", gol: 3, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Alessandro Bottazzi", squadra: "Goal Diggers", gol: 3, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Francesco Buscemi", squadra: "Goal Diggers", gol: 3, gialli: 1, rossi: 0, autogol: 0 },
+        { nome: "Matteo Soro", squadra: "Tuorlo Sodo", gol: 3, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Mario Gazzaneo", squadra: "Cavalli Pazzi", gol: 3, gialli: 0, rossi: 0, autogol: 1 },
+        { nome: "Giuseppe Dovì", squadra: "Lotta Tigres", gol: 2, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Giuseppe Fiorentino", squadra: "Lotta Tigres", gol: 2, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Aldo Tarantino", squadra: "Iubisoft", gol: 2, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Giuseppe Gargano", squadra: "Iubisoft", gol: 1, gialli: 0, rossi: 0, autogol: 0 },
+        { nome: "Alberto Cifelli", squadra: "Zambo Venom", gol: 1, gialli: 1, rossi: 0, autogol: 0 },
+        { nome: "Enrico Lastella", squadra: "Lotta Tigres", gol: 1, gialli: 0, rossi: 0, autogol: 0 }
+    ];
+
+    const portieriRaw = [
+        { nome: "Luca Devalle", squadra: "Goal Diggers", gol_subiti: 18, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 3, clean_sheet: 0 },
+        { nome: "John Perrino", squadra: "Zambo Venom", gol_subiti: 19, rigori_parati: 0, rigori_gm_parati: 1, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Flavio Spadaro", squadra: "Super Sonic", gol_subiti: 22, rigori_parati: 1, rigori_gm_parati: 1, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Alessandro Gadaleta", squadra: "Tuorlo Sodo", gol_subiti: 23, rigori_parati: 0, rigori_gm_parati: 3, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Alessio De Angelis", squadra: "Iubisoft", gol_subiti: 25, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Stefano Marchetti", squadra: "Cavalli Pazzi", gol_subiti: 25, rigori_parati: 0, rigori_gm_parati: 1, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Mattia D'Andria", squadra: "Lotta Tigres", gol_subiti: 29, rigori_parati: 0, rigori_gm_parati: 2, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Luigi Baldi", squadra: "LG Warriors", gol_subiti: 43, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 }
+    ];
+
+    const gmRaw = [
+        { nome: "Mihret Coccioli", squadra: "Super Sonic", gol_fatti: 2, rigori_sbagliati: 0, rigori_tirati: 2 },
+        { nome: "Sophia Angiola", squadra: "Cavalli Pazzi", gol_fatti: 1, rigori_sbagliati: 1, rigori_tirati: 2 },
+        { nome: "Laura Grande", squadra: "LG Warriors", gol_fatti: 1, rigori_sbagliati: 2, rigori_tirati: 3 },
+        { nome: "Chiara Soro", squadra: "Tuorlo Sodo", gol_fatti: 1, rigori_sbagliati: 4, rigori_tirati: 5 },
+        { nome: "Matilde Cameroni", squadra: "Iubisoft", gol_fatti: 0, rigori_sbagliati: 1, rigori_tirati: 1 },
+        { nome: "Flavia D'Avino", squadra: "Goal Diggers", gol_fatti: 0, rigori_sbagliati: 1, rigori_tirati: 1 },
+        { nome: "Giulia Giorgiutti", squadra: "Zambo Venom", gol_fatti: 1, rigori_sbagliati: 2, rigori_tirati: 3 },
+        { nome: "Giorgia Gambino", squadra: "Lotta Tigres", gol_fatti: 0, rigori_sbagliati: 1, rigori_tirati: 1 }
+    ];
+
     // -------------------- STATO GLOBALE --------------------
-    let tokenClient;
     let isLoggedIn = false;
-    let currentUser = null;
+    let tokenClient;
     
     let classificaSquadre = {};
     let giocatoriMap = new Map();
@@ -455,7 +500,6 @@
     let gmMap = new Map();
     let partiteSalvate = new Map();
 
-    // -------------------- INIZIALIZZAZIONE --------------------
     function initData() {
         SQUADRE.forEach(s => {
             classificaSquadre[s] = {
@@ -463,14 +507,24 @@
                 gol_fatti: 0, gol_subiti: 0, diff_reti: 0
             };
         });
+        marcatoriRaw.forEach(g => giocatoriMap.set(g.nome, { ...g }));
+        portieriRaw.forEach(p => portieriMap.set(p.nome, { ...p }));
+        gmRaw.forEach(g => gmMap.set(g.nome, { ...g }));
         partiteSalvate.clear();
+    }
+
+    function showStatus(message, type) {
+        const statusDiv = document.getElementById("statusMsg");
+        if (statusDiv) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
     }
 
     // -------------------- GOOGLE SHEETS API --------------------
     async function loadSheetData() {
         showStatus("Caricamento dati dal foglio...", "loading");
         try {
-            // Legge i dati dal foglio "Classifica"
             const response = await gapi.client.sheets.spreadsheets.values.get({
                 spreadsheetId: SPREADSHEET_ID,
                 range: "Classifica!A:I"
@@ -494,18 +548,18 @@
                     }
                 }
             }
-            showStatus("Dati caricati con successo!", "success");
+            showStatus("Dati caricati!", "success");
             render();
         } catch (error) {
-            console.error("Errore caricamento:", error);
-            showStatus("Errore nel caricamento dei dati", "error");
+            console.error(error);
+            showStatus("Errore caricamento - uso dati locali", "error");
+            render();
         }
     }
 
     async function saveToSheet() {
-        showStatus("Salvataggio in corso...", "loading");
+        showStatus("Salvataggio...", "loading");
         try {
-            // Prepara i dati della classifica
             const classificaData = [["Squadra", "Punti", "G", "V", "N", "S", "GF", "GS", "Diff"]];
             SQUADRE.forEach(s => {
                 const c = classificaSquadre[s];
@@ -518,24 +572,18 @@
                 valueInputOption: "RAW",
                 resource: { values: classificaData }
             });
-            
             showStatus("Salvato!", "success");
             setTimeout(() => showStatus("", ""), 2000);
         } catch (error) {
-            console.error("Errore salvataggio:", error);
-            showStatus("Errore nel salvataggio", "error");
+            console.error(error);
+            showStatus("Errore salvataggio", "error");
         }
     }
 
-    // -------------------- AGGIORNAMENTO DATI --------------------
+    // -------------------- FUNZIONI AGGIORNAMENTO --------------------
     function aggiungiGolGiocatore(nome, delta) {
         let g = giocatoriMap.get(nome);
-        if(g) { 
-            g.gol = Math.max(0, g.gol + delta); 
-            giocatoriMap.set(nome, g); 
-            saveToSheet(); 
-            render(); 
-        }
+        if(g) { g.gol = Math.max(0, g.gol + delta); giocatoriMap.set(nome, g); saveToSheet(); render(); }
     }
 
     function aggiungiCartellino(nome, tipo) {
@@ -544,30 +592,18 @@
             if(tipo === 'giallo') g.gialli++;
             if(tipo === 'rosso') g.rossi++;
             if(tipo === 'autogol') g.autogol++;
-            giocatoriMap.set(nome, g); 
-            saveToSheet(); 
-            render();
+            giocatoriMap.set(nome, g); saveToSheet(); render();
         }
     }
 
     function aggiungiStatGM(nome, field, delta) {
         let gm = gmMap.get(nome);
-        if(gm) { 
-            gm[field] = Math.max(0, gm[field] + delta); 
-            gmMap.set(nome, gm); 
-            saveToSheet(); 
-            render(); 
-        }
+        if(gm) { gm[field] = Math.max(0, gm[field] + delta); gmMap.set(nome, gm); saveToSheet(); render(); }
     }
 
     function aggiungiStatPortiere(nome, field, delta) {
         let p = portieriMap.get(nome);
-        if(p) { 
-            p[field] = Math.max(0, p[field] + delta); 
-            portieriMap.set(nome, p); 
-            saveToSheet(); 
-            render(); 
-        }
+        if(p) { p[field] = Math.max(0, p[field] + delta); portieriMap.set(nome, p); saveToSheet(); render(); }
     }
 
     function applicaRisultatoPartita(home, away, goalHome, goalAway) {
@@ -591,58 +627,155 @@
         if(goalHome === 0 && portiereAway) portiereAway.clean_sheet = (portiereAway.clean_sheet || 0) + 1;
     }
 
-    // -------------------- GOOGLE LOGIN --------------------
-    function showStatus(message, type) {
-        const statusDiv = document.getElementById("statusMsg");
-        statusDiv.textContent = message;
-        statusDiv.className = `status ${type}`;
-    }
-
-    function handleAuthClick() {
-        tokenClient.callback = async (resp) => {
-            if (resp.error !== undefined) {
-                throw (resp);
-            }
-            isLoggedIn = true;
-            document.getElementById("loginSection").innerHTML = `
-                <div class="user-info">
-                    <span>👤 ${currentUser}</span>
-                    <button id="logoutBtn" class="logout-btn">🚪 Esci</button>
+    // -------------------- RENDER --------------------
+    function renderTeamStats(squadra, prefix) {
+        const giocatori = Array.from(giocatoriMap.values()).filter(g => g.squadra === squadra);
+        const portiere = Array.from(portieriMap.values()).find(p => p.squadra === squadra);
+        const gm = Array.from(gmMap.values()).find(g => g.squadra === squadra);
+        let html = `<div class="players-list"><strong>⚽ Giocatori</strong>`;
+        giocatori.forEach(g => {
+            html += `<div class="player-row" data-team="${prefix}">
+                <span class="player-name">${g.nome}</span>
+                <div class="stat-control">
+                    <button class="player-gol-dec" data-player="${g.nome}" data-prefix="${prefix}">-</button>
+                    <span class="player-gol-val" data-player="${g.nome}" data-prefix="${prefix}">0</span>
+                    <button class="player-gol-inc" data-player="${g.nome}" data-prefix="${prefix}">+</button>
+                    <span>Gol</span>
                 </div>
-                <div id="statusMsg" class="status"></div>
-            `;
-            document.getElementById("appContent").style.display = "block";
-            document.getElementById("logoutBtn").addEventListener("click", () => {
-                const token = gapi.client.getToken();
-                if (token) {
-                    google.accounts.oauth2.revoke(token.access_token);
-                    gapi.client.setToken(null);
-                }
-                isLoggedIn = false;
-                location.reload();
-            });
-            showStatus("Login effettuato! Caricamento dati...", "success");
-            await loadSheetData();
-        };
-        tokenClient.requestAccessToken({prompt: "consent"});
+                <button class="icon-btn" data-player="${g.nome}" data-card="giallo" data-prefix="${prefix}" title="Cartellino Giallo">🟨</button>
+                <button class="icon-btn" data-player="${g.nome}" data-card="rosso" data-prefix="${prefix}" title="Cartellino Rosso">🟥</button>
+                <button class="icon-btn" data-player="${g.nome}" data-card="autogol" data-prefix="${prefix}" title="Autogol">🔄🥅</button>
+                <span class="badge">🟨${g.gialli} 🟥${g.rossi} OG${g.autogol}</span>
+            </div>`;
+        });
+        html += `</div>`;
+        if(portiere) {
+            html += `<div class="keeper-card" data-team="${prefix}"><strong>🧤 Portiere: ${portiere.nome}</strong>
+                <div class="keeper-row">
+                    <div class="stat-control">
+                        <button class="portiere-dec" data-portiere="${portiere.nome}" data-field="rigori_parati" data-prefix="${prefix}">-</button>
+                        <span class="portiere-val" data-field="rigori_parati" data-portiere="${portiere.nome}" data-prefix="${prefix}">0</span>
+                        <button class="portiere-inc" data-portiere="${portiere.nome}" data-field="rigori_parati" data-prefix="${prefix}">+</button>
+                        <span>Rigori parati</span>
+                    </div>
+                    <div class="stat-control">
+                        <button class="portiere-dec" data-portiere="${portiere.nome}" data-field="rigori_gm_parati" data-prefix="${prefix}">-</button>
+                        <span class="portiere-val" data-field="rigori_gm_parati" data-portiere="${portiere.nome}" data-prefix="${prefix}">0</span>
+                        <button class="portiere-inc" data-portiere="${portiere.nome}" data-field="rigori_gm_parati" data-prefix="${prefix}">+</button>
+                        <span>Rigori GM parati</span>
+                    </div>
+                    <div class="stat-control">
+                        <button class="portiere-dec" data-portiere="${portiere.nome}" data-field="gol_fatti" data-prefix="${prefix}">-</button>
+                        <span class="portiere-val" data-field="gol_fatti" data-portiere="${portiere.nome}" data-prefix="${prefix}">0</span>
+                        <button class="portiere-inc" data-portiere="${portiere.nome}" data-field="gol_fatti" data-prefix="${prefix}">+</button>
+                        <span>Gol fatti</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+        if(gm) {
+            html += `<div class="gm-list" data-team="${prefix}"><strong><span class="gm-logo">🎀</span> GM: ${gm.nome}</strong>
+                <div class="gm-row">
+                    <div class="stat-control">
+                        <button class="gm-dec" data-gm="${gm.nome}" data-field="gol_fatti" data-prefix="${prefix}">-</button>
+                        <span class="gm-val" data-field="gol_fatti" data-gm="${gm.nome}" data-prefix="${prefix}">0</span>
+                        <button class="gm-inc" data-gm="${gm.nome}" data-field="gol_fatti" data-prefix="${prefix}">+</button>
+                        <span>Gol fatti</span>
+                    </div>
+                    <div class="stat-control">
+                        <button class="gm-dec" data-gm="${gm.nome}" data-field="rigori_tirati" data-prefix="${prefix}">-</button>
+                        <span class="gm-val" data-field="rigori_tirati" data-gm="${gm.nome}" data-prefix="${prefix}">0</span>
+                        <button class="gm-inc" data-gm="${gm.nome}" data-field="rigori_tirati" data-prefix="${prefix}">+</button>
+                        <span>Rigori tirati</span>
+                    </div>
+                    <div class="stat-control">
+                        <button class="gm-dec" data-gm="${gm.nome}" data-field="rigori_sbagliati" data-prefix="${prefix}">-</button>
+                        <span class="gm-val" data-field="rigori_sbagliati" data-gm="${gm.nome}" data-prefix="${prefix}">0</span>
+                        <button class="gm-inc" data-gm="${gm.nome}" data-field="rigori_sbagliati" data-prefix="${prefix}">+</button>
+                        <span>Rigori sbagliati</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+        return html;
     }
 
-    async function initializeGapiClient() {
-        await gapi.client.init({
-            apiKey: CLIENT_ID,
-            discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+    function raccogliStatisticheSquadra(matchDiv, squadra) {
+        const sections = matchDiv.querySelectorAll('.team-section');
+        let targetSection = null;
+        for(let sec of sections) {
+            if(sec.querySelector('.team-name')?.innerText.includes(squadra)) {
+                targetSection = sec;
+                break;
+            }
+        }
+        if(!targetSection) return { giocatori: [], cartellini: [], gm: [], portieri: [] };
+        const giocatori = [];
+        targetSection.querySelectorAll('.player-row').forEach(row => {
+            const nome = row.querySelector('.player-gol-inc')?.dataset.player;
+            if(nome) {
+                const golSpan = row.querySelector('.player-gol-val');
+                const gol = parseInt(golSpan?.innerText || '0');
+                if(gol>0) giocatori.push({ nome, gol });
+            }
         });
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            callback: "", // defined later
-        });
-        document.getElementById("loginBtn").addEventListener("click", handleAuthClick);
+        const gm = [];
+        const gmRow = targetSection.querySelector('.gm-list');
+        if(gmRow) {
+            const nome = gmRow.querySelector('.gm-inc')?.dataset.gm;
+            if(nome) {
+                const gol = parseInt(gmRow.querySelector('.gm-val[data-field="gol_fatti"]')?.innerText || '0');
+                const rigoriTirati = parseInt(gmRow.querySelector('.gm-val[data-field="rigori_tirati"]')?.innerText || '0');
+                const rigoriSbagliati = parseInt(gmRow.querySelector('.gm-val[data-field="rigori_sbagliati"]')?.innerText || '0');
+                gm.push({ nome, gol: gol, rigoriTirati, rigoriSbagliati });
+            }
+        }
+        const portieri = [];
+        const keeperRow = targetSection.querySelector('.keeper-card');
+        if(keeperRow) {
+            const nome = keeperRow.querySelector('.portiere-inc')?.dataset.portiere;
+            if(nome) {
+                const rigoriParati = parseInt(keeperRow.querySelector('.portiere-val[data-field="rigori_parati"]')?.innerText || '0');
+                const rigoriGmParati = parseInt(keeperRow.querySelector('.portiere-val[data-field="rigori_gm_parati"]')?.innerText || '0');
+                const golFatti = parseInt(keeperRow.querySelector('.portiere-val[data-field="gol_fatti"]')?.innerText || '0');
+                portieri.push({ nome, rigoriParati, rigoriGmParati, golFatti });
+            }
+        }
+        return { giocatori, cartellini: [], gm, portieri };
     }
 
-    // -------------------- RENDER (uguale alla versione precedente) --------------------
+    function resettaCampiSquadra(matchDiv, squadra) {
+        const sections = matchDiv.querySelectorAll('.team-section');
+        let targetSection = null;
+        for(let sec of sections) {
+            if(sec.querySelector('.team-name')?.innerText.includes(squadra)) {
+                targetSection = sec;
+                break;
+            }
+        }
+        if(!targetSection) return;
+        targetSection.querySelectorAll('.player-gol-val').forEach(span => span.innerText = '0');
+        targetSection.querySelectorAll('.gm-val').forEach(span => span.innerText = '0');
+        targetSection.querySelectorAll('.portiere-val').forEach(span => span.innerText = '0');
+    }
+
+    function renderClassifica() {
+        const sorted = SQUADRE.map(s => ({ nome: s, ...classificaSquadre[s] }))
+            .sort((a,b) => b.punti - a.punti || b.diff_reti - a.diff_reti);
+        const container = document.getElementById("classificaContainer");
+        container.innerHTML = `
+            <h3>📊 Classifica</h3>
+            <table>
+                <thead><tr><th>Squadra</th><th>Pti</th><th>G</th><th>V</th><th>N</th><th>S</th><th>GF</th><th>GS</th><th>DR</th></tr></thead>
+                <tbody>
+                    ${sorted.map(s => `<tr><td style="text-align:left">${s.nome}</td><td>${s.punti}</td><td>${s.partite}</td><td>${s.vittorie}</td><td>${s.pareggi}</td><td>${s.sconfitte}</td><td>${s.gol_fatti}</td><td>${s.gol_subiti}</td><td>${s.diff_reti}</td>`).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
     function render() {
-        const giornata = parseInt(document.getElementById("giornataSelect").value);
+        const giornata = parseInt(document.getElementById("giornataSelect")?.value || 1);
         const partite = calendario[giornata];
         const container = document.getElementById("partiteContainer");
         if (!container) return;
@@ -719,8 +852,6 @@
                 applicaRisultatoPartita(home, away, homeGol, awayGol);
                 homeStats.giocatori.forEach(g => aggiungiGolGiocatore(g.nome, g.gol));
                 awayStats.giocatori.forEach(g => aggiungiGolGiocatore(g.nome, g.gol));
-                homeStats.cartellini.forEach(c => aggiungiCartellino(c.nome, c.tipo));
-                awayStats.cartellini.forEach(c => aggiungiCartellino(c.nome, c.tipo));
                 homeStats.gm.forEach(gm => { aggiungiStatGM(gm.nome, "gol_fatti", gm.gol); aggiungiStatGM(gm.nome, "rigori_tirati", gm.rigoriTirati); aggiungiStatGM(gm.nome, "rigori_sbagliati", gm.rigoriSbagliati); });
                 awayStats.gm.forEach(gm => { aggiungiStatGM(gm.nome, "gol_fatti", gm.gol); aggiungiStatGM(gm.nome, "rigori_tirati", gm.rigoriTirati); aggiungiStatGM(gm.nome, "rigori_sbagliati", gm.rigoriSbagliati); });
                 homeStats.portieri.forEach(p => { aggiungiStatPortiere(p.nome, "rigori_parati", p.rigoriParati); aggiungiStatPortiere(p.nome, "rigori_gm_parati", p.rigoriGmParati); aggiungiStatPortiere(p.nome, "gol_fatti", p.golFatti); });
@@ -738,47 +869,6 @@
         renderClassifica();
     }
 
-    function renderTeamStats(squadra, prefix) {
-        // Versione semplificata per brevità – includi la stessa logica della versione precedente
-        return `<div class="players-list"><strong>⚽ Giocatori</strong><div>Team stats placeholder</div></div>`;
-    }
-
-    function raccogliStatisticheSquadra(matchDiv, squadra) {
-        // Versione semplificata – includi la stessa logica della versione precedente
-        return { giocatori: [], cartellini: [], gm: [], portieri: [] };
-    }
-
-    function resettaCampiSquadra(matchDiv, squadra) {
-        const sections = matchDiv.querySelectorAll('.team-section');
-        let targetSection = null;
-        for(let sec of sections) {
-            if(sec.querySelector('.team-name')?.innerText.includes(squadra)) {
-                targetSection = sec;
-                break;
-            }
-        }
-        if(!targetSection) return;
-        targetSection.querySelectorAll('.player-gol-val').forEach(span => span.innerText = '0');
-        targetSection.querySelectorAll('.gm-val').forEach(span => span.innerText = '0');
-        targetSection.querySelectorAll('.portiere-val').forEach(span => span.innerText = '0');
-    }
-
-    function renderClassifica() {
-        const sorted = SQUADRE.map(s => ({ nome: s, ...classificaSquadre[s] }))
-            .sort((a,b) => b.punti - a.punti || b.diff_reti - a.diff_reti);
-        const container = document.getElementById("classificaContainer");
-        if (!container) return;
-        container.innerHTML = `
-            <h3>📊 Classifica</h3>
-            <table>
-                <thead><tr><th>Squadra</th><th>Pti</th><th>G</th><th>V</th><th>N</th><th>S</th><th>GF</th><th>GS</th><th>DR</th></tr></thead>
-                <tbody>
-                    ${sorted.map(s => `<tr><td style="text-align:left">${s.nome}</td><td>${s.punti}</td><td>${s.partite}</td><td>${s.vittorie}</td><td>${s.pareggi}</td><td>${s.sconfitte}</td><td>${s.gol_fatti}</td><td>${s.gol_subiti}</td><td>${s.diff_reti}</td>`).join('')}
-                </tbody>
-            </table>
-        `;
-    }
-
     function populateGiornate() {
         const select = document.getElementById("giornataSelect");
         if (!select) return;
@@ -791,13 +881,58 @@
         select.addEventListener("change", () => render());
     }
 
+    // -------------------- GOOGLE LOGIN --------------------
+    async function initializeGapiClient() {
+        await gapi.client.init({
+            apiKey: CLIENT_ID,
+            discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+        });
+    }
+
+    function handleAuthClick() {
+        tokenClient.callback = async (resp) => {
+            if (resp.error !== undefined) {
+                throw (resp);
+            }
+            isLoggedIn = true;
+            const userInfo = tokenClient.getUser();
+            document.getElementById("loginSection").innerHTML = `
+                <div class="user-info">
+                    <span>👤 ${userInfo?.getEmail() || "Utente"}</span>
+                    <button id="logoutBtn" class="logout-btn">🚪 Esci</button>
+                </div>
+                <div id="statusMsg" class="status"></div>
+            `;
+            document.getElementById("appContent").style.display = "block";
+            document.getElementById("logoutBtn").addEventListener("click", () => {
+                const token = gapi.client.getToken();
+                if (token) {
+                    google.accounts.oauth2.revoke(token.access_token);
+                    gapi.client.setToken(null);
+                }
+                isLoggedIn = false;
+                location.reload();
+            });
+            showStatus("Login effettuato! Caricamento...", "success");
+            await loadSheetData();
+        };
+        tokenClient.requestAccessToken({prompt: "consent"});
+    }
+
     // -------------------- INIT --------------------
     initData();
     populateGiornate();
-    
-    // Carica Google API
+
     window.onload = () => {
-        gapi.load("client", initializeGapiClient);
+        gapi.load("client", async () => {
+            await initializeGapiClient();
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: "",
+            });
+            document.getElementById("loginBtn").addEventListener("click", handleAuthClick);
+        });
     };
 </script>
 </body>
