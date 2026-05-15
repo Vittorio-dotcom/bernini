@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login Google</title>
+    <script src="https://accounts.google.com/gsi/client"></script>
+</head>
+<body>
+    <h1>Test Login Google</h1>
+    <div id="g_id_onload"
+         data-client_id="895388929631-c0p8rgui71cv1u48v9tcmrpolep8md68.apps.googleusercontent.com"
+         data-login_uri="https://vittorio-dotcom.github.io/bernini/test.html"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+         data-type="standard"
+         data-size="large"
+         data-theme="outline"
+         data-text="sign_in_with"
+         data-shape="rectangular"
+         data-logo_alignment="left">
+    </div>
+    <div id="result"></div>
+    <script>
+        window.onload = function() {
+            console.log("Pagina caricata");
+            // Questo è solo un test per vedere se lo script viene eseguito
+            document.body.style.backgroundColor = "#f0f0f0";
+        };
+        
+        // Funzione che verrà chiamata dopo il login
+        function handleCredentialResponse(response) {
+            console.log("Login successo!", response);
+            document.getElementById("result").innerHTML = "<p>✅ Login riuscito! Ora possiamo procedere.</p>";
+            // Decodifica il token per vedere l'email
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            console.log("Utente:", payload.email);
+            document.getElementById("result").innerHTML += `<p>Email: ${payload.email}</p>`;
+        }
+    </script>
+</body>
+</html>
