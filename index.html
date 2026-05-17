@@ -360,24 +360,19 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://script.google.com/macros/s/AKfycbw7TQxvuZ2OgpUbLmi59E6XUbY-57UqWbK5eqSmEHZjZRkfQbMl5PdyTddaWiYoE2U4/exec";
+    const APPS_URL = "https://script.google.com/macros/s/AKfycbwSFn-I7Nsav0wEzt5Er4WIrQmI-5HtBunPybMRSgPotOwxcPgLjqmbolGzfaulcTIe/exec";
 
     async function syncToSheets(password, data) {
+        // Usiamo GET con payload come query param — nessun preflight CORS
         const payload = JSON.stringify({ password, action: "syncAll", data });
-        // URLSearchParams = application/x-www-form-urlencoded
-        // This is a "simple request" — no CORS preflight triggered
-        const body = new URLSearchParams({ payload });
-        const resp = await fetch(APPS_URL, {
-            method: "POST",
-            body: body
-        });
+        const url = APPS_URL + "?payload=" + encodeURIComponent(payload);
+        const resp = await fetch(url, { method: "GET" });
         const text = await resp.text();
         try {
             const json = JSON.parse(text);
             if (!json.ok) throw new Error(json.error || "Errore");
             return json;
         } catch(e) {
-            // If we can't parse response but request went through, treat as ok
             return { ok: true };
         }
     }
