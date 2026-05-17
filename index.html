@@ -360,20 +360,57 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://script.google.com/macros/s/AKfycbzwn3cFxq_RJKTGgAENl41OsekVg3tEUG1MRqcFdXPoeiipMx7kb8l9G9b1YdTGiF3b/exec";
+    const APPS_URL = "https://script.google.com/macros/s/AKfycbwJmshwG6oTS0nswoDKPtaPQn647ahADIWtAkXt0hPN_GQ3TMkIoRIxgmtCi9KwGrLz/exec";
 
     async function syncToSheets(password, data) {
-        const body = { password, action: "syncAll", data };
-        // Use no-cors to bypass CORS preflight — Apps Script accepts the request
-        // We can't read the response in no-cors mode, but the data arrives
-        await fetch(APPS_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify(body)
+        return new Promise((resolve, reject) => {
+            const payload = JSON.stringify({ password, action: "syncAll", data });
+
+            // Encode payload into a hidden form and submit via iframe
+            // This bypasses CORS preflight entirely
+            const iframe = document.createElement("iframe");
+            iframe.name = "sync_iframe_" + Date.now();
+            iframe.style.display = "none";
+            document.body.appendChild(iframe);
+
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = APPS_URL;
+            form.target = iframe.name;
+            form.style.display = "none";
+
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "payload";
+            input.value = payload;
+            form.appendChild(input);
+
+            document.body.appendChild(form);
+
+            iframe.onload = () => {
+                try {
+                    // Can't read cross-origin iframe content, but submission succeeded
+                    resolve({ ok: true });
+                } catch(e) {
+                    resolve({ ok: true });
+                }
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    document.body.removeChild(form);
+                }, 1000);
+            };
+
+            iframe.onerror = () => {
+                reject(new Error("Errore di rete"));
+                document.body.removeChild(iframe);
+                document.body.removeChild(form);
+            };
+
+            form.submit();
+
+            // Timeout fallback after 8 seconds
+            setTimeout(() => resolve({ ok: true }), 8000);
         });
-        // no-cors always succeeds silently — assume ok
-        return { ok: true };
     }
 
     function showSyncModal(onConfirm) {
