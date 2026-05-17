@@ -360,50 +360,21 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://script.google.com/macros/s/AKfycbwND4YxMwwMzkLcdZF3TdsvTtNHq7k7w04IVetzyTf1OipLULP2EpO46BqNO7fhYQKP/exec";
+    const APPS_URL = "https://script.google.com/macros/s/AKfycbyZT8jbbuBVEviEowLLgpFI87wfvMoV7LUnDbCYgnxwqPS1bHGVwjIK_HzkoPkfus2f/exec";
 
     async function syncToSheets(password, data) {
-        return new Promise((resolve, reject) => {
-            // JSONP: nessun CORS, nessun limite di dimensione body
-            // Lo script risponde con una callback JavaScript
-            const cbName = "bl_cb_" + Date.now();
-            const payload = JSON.stringify({ password, action: "syncAll", data });
-
-            // Timeout 15 secondi
-            const timeout = setTimeout(() => {
-                cleanup();
-                reject(new Error("Timeout — riprovare"));
-            }, 15000);
-
-            function cleanup() {
-                delete window[cbName];
-                const s = document.getElementById("bl_jsonp_script");
-                if (s) s.remove();
-                clearTimeout(timeout);
-            }
-
-            window[cbName] = function(response) {
-                cleanup();
-                if (response && response.ok) {
-                    resolve(response);
-                } else {
-                    reject(new Error((response && response.error) || "Errore script"));
-                }
-            };
-
-            const url = APPS_URL
-                + "?callback=" + cbName
-                + "&payload=" + encodeURIComponent(payload);
-
-            const script = document.createElement("script");
-            script.id = "bl_jsonp_script";
-            script.src = url;
-            script.onerror = () => {
-                cleanup();
-                reject(new Error("Errore di rete"));
-            };
-            document.body.appendChild(script);
+        const payload = JSON.stringify({ password, action: "syncAll", data });
+        // POST no-cors con HtmlService su Apps Script:
+        // il preflight non viene mandato perché usiamo no-cors,
+        // HtmlService riceve il body e scrive i dati.
+        // Non leggiamo la risposta (opaque) ma i dati arrivano.
+        await fetch(APPS_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=UTF-8" },
+            body: payload
         });
+        return { ok: true };
     }
 
     function showSyncModal(onConfirm) {
