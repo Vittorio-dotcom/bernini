@@ -360,7 +360,7 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://script.google.com/macros/s/AKfycbyc4LGPChlXE_6iGhTJYjHCzdO1p5uck5d_8KPSlmAI_bVqG6WwN6S3vdjG6U5gExlz/exec";
+    const APPS_URL = "https://script.google.com/macros/s/AKfycbzqX_KoS0KL6v73WM-2JtHUA2OojtvpmFkaA2flT1fkAbGkkbi34nFTjFhaUT4aJplu/exec";
 
     async function syncToSheets(password, data) {
         // text/plain non triggera preflight CORS — Apps Script riceve il body
@@ -837,12 +837,7 @@
                         <button class="gm-inc" data-gm="${gm.nome}" data-field="rigori_tirati" data-prefix="${prefix}">+</button>
                         <span>Rigori tirati</span>
                     </div>
-                    <div class="stat-control">
-                        <button class="gm-dec" data-gm="${gm.nome}" data-field="rigori_sbagliati" data-prefix="${prefix}">-</button>
-                        <span class="gm-val" data-field="rigori_sbagliati" data-gm="${gm.nome}" data-prefix="${prefix}">0</span>
-                        <button class="gm-inc" data-gm="${gm.nome}" data-field="rigori_sbagliati" data-prefix="${prefix}">+</button>
-                        <span>Rigori sbagliati</span>
-                    </div>
+
                 </div>
             </div>`;
         }
@@ -876,8 +871,7 @@
             if(nome) {
                 const gol = parseInt(gmRow.querySelector('.gm-val[data-field="gol_fatti"]')?.innerText || '0');
                 const rigoriTirati = parseInt(gmRow.querySelector('.gm-val[data-field="rigori_tirati"]')?.innerText || '0');
-                const rigoriSbagliati = parseInt(gmRow.querySelector('.gm-val[data-field="rigori_sbagliati"]')?.innerText || '0');
-                gm.push({ nome, gol: gol, rigoriTirati, rigoriSbagliati });
+                gm.push({ nome, gol: gol, rigoriTirati, rigoriSbagliati: 0 });
             }
         }
         const portieri = [];
