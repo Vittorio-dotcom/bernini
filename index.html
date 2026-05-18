@@ -360,20 +360,16 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://script.google.com/macros/s/AKfycbwjxEDWaIC-Hu6azKgdg5xre6ZtS_-h8cZ894qSMo7ayfanJgo4_26cUrU9HQIXzlbm/exec";
+    const APPS_URL = "https://hook.eu1.make.com/u19phxbcjqbj8n2i5st5p5oilsa5qmwv";
 
     async function syncToSheets(password, data) {
-        const payload = JSON.stringify({ password, action: "syncAll", data });
-        // POST no-cors con HtmlService su Apps Script:
-        // il preflight non viene mandato perché usiamo no-cors,
-        // HtmlService riceve il body e scrive i dati.
-        // Non leggiamo la risposta (opaque) ma i dati arrivano.
-        await fetch(APPS_URL, {
+        // Make webhook — accetta POST JSON nativo, nessun problema CORS
+        const resp = await fetch(APPS_URL, {
             method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain;charset=UTF-8" },
-            body: payload
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password, data })
         });
+        if (!resp.ok) throw new Error("Errore rete: " + resp.status);
         return { ok: true };
     }
 
