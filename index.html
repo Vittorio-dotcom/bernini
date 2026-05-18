@@ -360,12 +360,13 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://script.google.com/macros/s/AKfycbyc4LGPChlXE_6iGhTJYjHCzdO1p5uck5d_8KPSlmAI_bVqG6WwN6S3vdjG6U5gExlz/exec";
+    const APPS_URL = "https://script.google.com/macros/s/AKfycbwEUh1FftLMRvbilCki8HzeWLPMQQLSZcn5h2-qXgIUjE4nBDjYKoejTw1voEAu6XNJ/exec";
 
     async function syncToSheets(password, data) {
+        // text/plain non triggera preflight CORS — Apps Script riceve il body
         const resp = await fetch(APPS_URL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "text/plain" },
             body: JSON.stringify({ password, data })
         });
         const json = await resp.json();
