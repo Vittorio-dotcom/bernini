@@ -360,7 +360,7 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://script.google.com/macros/s/AKfycbwEUh1FftLMRvbilCki8HzeWLPMQQLSZcn5h2-qXgIUjE4nBDjYKoejTw1voEAu6XNJ/exec";
+    const APPS_URL = "https://script.google.com/macros/s/AKfycbyc4LGPChlXE_6iGhTJYjHCzdO1p5uck5d_8KPSlmAI_bVqG6WwN6S3vdjG6U5gExlz/exec";
 
     async function syncToSheets(password, data) {
         // text/plain non triggera preflight CORS — Apps Script riceve il body
@@ -530,7 +530,18 @@
 
     function initData() {
         SQUADRE.forEach(s => {
-            classificaSquadre[s] = {
+            // Dati storici precaricati dall'Excel
+            const initCL = {
+                "Goal Diggers":  {punti:15,partite:6,vittorie:5,pareggi:0,sconfitte:1,gol_fatti:33,gol_subiti:18,diff_reti:15},
+                "Zambo Venom":   {punti:13,partite:6,vittorie:4,pareggi:1,sconfitte:1,gol_fatti:27,gol_subiti:19,diff_reti:8},
+                "Tuorlo Sodo":   {punti:10,partite:6,vittorie:3,pareggi:1,sconfitte:2,gol_fatti:26,gol_subiti:23,diff_reti:3},
+                "LG Warriors":   {punti:9, partite:6,vittorie:3,pareggi:0,sconfitte:3,gol_fatti:31,gol_subiti:43,diff_reti:-12},
+                "Iubisoft":      {punti:8, partite:7,vittorie:2,pareggi:2,sconfitte:3,gol_fatti:23,gol_subiti:25,diff_reti:-2},
+                "Super Sonic":   {punti:6, partite:6,vittorie:2,pareggi:0,sconfitte:4,gol_fatti:27,gol_subiti:26,diff_reti:1},
+                "Cavalli Pazzi": {punti:4, partite:5,vittorie:1,pareggi:1,sconfitte:3,gol_fatti:21,gol_subiti:25,diff_reti:-4},
+                "Lotta Tigres":  {punti:4, partite:6,vittorie:1,pareggi:1,sconfitte:4,gol_fatti:20,gol_subiti:29,diff_reti:-9}
+            };
+            classificaSquadre[s] = initCL[s] ? {...initCL[s]} : {
                 punti: 0, partite: 0, vittorie: 0, pareggi: 0, sconfitte: 0,
                 gol_fatti: 0, gol_subiti: 0, diff_reti: 0
             };
