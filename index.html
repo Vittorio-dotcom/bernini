@@ -360,17 +360,17 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://hook.eu1.make.com/u19phxbcjqbj8n2i5st5p5oilsa5qmwv";
+    const APPS_URL = "https://script.google.com/macros/s/AKfycbyc4LGPChlXE_6iGhTJYjHCzdO1p5uck5d_8KPSlmAI_bVqG6WwN6S3vdjG6U5gExlz/exec";
 
     async function syncToSheets(password, data) {
-        // Make webhook — accetta POST JSON nativo, nessun problema CORS
         const resp = await fetch(APPS_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password, data })
         });
-        if (!resp.ok) throw new Error("Errore rete: " + resp.status);
-        return { ok: true };
+        const json = await resp.json();
+        if (!json.ok) throw new Error(json.error || "Errore");
+        return json;
     }
 
     function showSyncModal(onConfirm) {
