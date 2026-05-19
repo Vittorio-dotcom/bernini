@@ -360,7 +360,7 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://script.google.com/macros/s/AKfycbzqX_KoS0KL6v73WM-2JtHUA2OojtvpmFkaA2flT1fkAbGkkbi34nFTjFhaUT4aJplu/exec";
+    const APPS_URL = "https://script.google.com/macros/s/AKfycbyc4LGPChlXE_6iGhTJYjHCzdO1p5uck5d_8KPSlmAI_bVqG6WwN6S3vdjG6U5gExlz/exec";
 
     async function syncToSheets(password, data) {
         // text/plain non triggera preflight CORS — Apps Script riceve il body
@@ -496,7 +496,17 @@
         { nome: "Aldo Tarantino", squadra: "Iubisoft", gol: 2, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
         { nome: "Giuseppe Gargano", squadra: "Iubisoft", gol: 1, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
         { nome: "Alberto Cifelli", squadra: "Zambo Venom", gol: 1, gialli: 1, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Enrico Lastella", squadra: "Lotta Tigres", gol: 1, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 }
+        { nome: "Enrico Lastella", squadra: "Lotta Tigres", gol: 1, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Aodhan Ganson Perrin", squadra: "Lotta Tigres", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Sofia D'Arcangelo", squadra: "Super Sonic", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Emmanuel Bastié", squadra: "Goal Diggers", gol: 0, gialli: 1, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Marco Troncone", squadra: "Zambo Venom", gol: 0, gialli: 1, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Edoardo Coscia", squadra: "Zambo Venom", gol: 0, gialli: 0, rossi: 0, autogol: 1, rigori_sbagliati: 0 },
+        { nome: "Matteo Mariani", squadra: "LG Warriors", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Matteo Balestriere", squadra: "LG Warriors", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Casati Niccolò", squadra: "Tuorlo Sodo", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Alessandro Gilardi", squadra: "Cavalli Pazzi", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Luca Usai", squadra: "Cavalli Pazzi", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 }
     ];
 
     const portieriRaw = [
@@ -546,7 +556,13 @@
                 gol_fatti: 0, gol_subiti: 0, diff_reti: 0
             };
         });
-        marcatoriRaw.forEach(g => giocatoriMap.set(g.nome, { ...g }));
+        const PORTIERI_NOMI = new Set([
+            "Luca Devalle","Alessandro Gadaleta","Flavio Spadaro","Alessio De Angelis",
+            "Stefano Marchetti","John Perrino","Mattia D'Andria","Luigi Baldi"
+        ]);
+        marcatoriRaw.forEach(g => {
+            if (!PORTIERI_NOMI.has(g.nome)) giocatoriMap.set(g.nome, { ...g });
+        });
         portieriRaw.forEach(p => portieriMap.set(p.nome, { ...p }));
         gmRaw.forEach(g => gmMap.set(g.nome, { ...g }));
         partiteSalvate.clear();
@@ -560,11 +576,11 @@
             gm: Array.from(gmMap.entries()),
             partiteSalvate: Array.from(partiteSalvate.entries())
         };
-        localStorage.setItem("campionatoState_v2", JSON.stringify(state));
+        localStorage.setItem("campionatoState_v3", JSON.stringify(state));
     }
 
     function loadState() {
-        const saved = localStorage.getItem("campionatoState_v2");
+        const saved = localStorage.getItem("campionatoState_v3");
         if (!saved) return false;
         try {
             const state = JSON.parse(saved);
