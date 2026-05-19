@@ -360,7 +360,7 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://script.google.com/macros/library/d/1Kt5fv8mSU0z_9E1VdyNzM2F7BpE1Wfa0QUcoKdyMVDgRzTRguXsWRn3k/14";
+    const APPS_URL = "https://script.google.com/macros/s/AKfycbyc4LGPChlXE_6iGhTJYjHCzdO1p5uck5d_8KPSlmAI_bVqG6WwN6S3vdjG6U5gExlz/exec";
 
     async function syncToSheets(password, data) {
         // text/plain non triggera preflight CORS — Apps Script riceve il body
@@ -374,7 +374,7 @@
         return json;
     }
 
-    function showSyncModal(onConfirm) {
+    function showSyncModal(_home, _away, _hG, _aG, _sd) {
         const overlay = document.createElement("div");
         overlay.className = "sync-overlay";
         overlay.innerHTML = `
@@ -404,73 +404,56 @@
             btn.textContent = "⏳ Sincronizzazione...";
             btn.disabled = true;
 
-            // Manda solo i delta della singola partita
+
+
+            // Costruisci delta qui dentro dove abbiamo i valori catturati
             const marcatoriDelta = {};
-            for (const [nome, delta] of Object.entries(sessionDeltas.gol)) {
-                if (!marcatoriDelta[nome]) marcatoriDelta[nome] = { gol:0, gialli:0, rossi:0, autogol:0, rigori_sbagliati:0 };
-                marcatoriDelta[nome].gol = delta;
-            }
-            for (const [nome, delta] of Object.entries(sessionDeltas.gialli)) {
-                if (!marcatoriDelta[nome]) marcatoriDelta[nome] = { gol:0, gialli:0, rossi:0, autogol:0, rigori_sbagliati:0 };
-                marcatoriDelta[nome].gialli = delta;
-            }
-            for (const [nome, delta] of Object.entries(sessionDeltas.rossi)) {
-                if (!marcatoriDelta[nome]) marcatoriDelta[nome] = { gol:0, gialli:0, rossi:0, autogol:0, rigori_sbagliati:0 };
-                marcatoriDelta[nome].rossi = delta;
-            }
-            for (const [nome, delta] of Object.entries(sessionDeltas.autogol)) {
-                if (!marcatoriDelta[nome]) marcatoriDelta[nome] = { gol:0, gialli:0, rossi:0, autogol:0, rigori_sbagliati:0 };
-                marcatoriDelta[nome].autogol = delta;
-            }
-            for (const [nome, delta] of Object.entries(sessionDeltas.rigori_sbagliati)) {
-                if (!marcatoriDelta[nome]) marcatoriDelta[nome] = { gol:0, gialli:0, rossi:0, autogol:0, rigori_sbagliati:0 };
-                marcatoriDelta[nome].rigori_sbagliati = delta;
-            }
+            const addToMarc = (map, field) => {
+                for (const [nome, delta] of Object.entries(map)) {
+                    if (!marcatoriDelta[nome]) marcatoriDelta[nome] = {gol:0,gialli:0,rossi:0,autogol:0,rigori_sbagliati:0};
+                    marcatoriDelta[nome][field] = delta;
+                }
+            };
+            addToMarc(_sd.gol, 'gol');
+            addToMarc(_sd.gialli, 'gialli');
+            addToMarc(_sd.rossi, 'rossi');
+            addToMarc(_sd.autogol, 'autogol');
+            addToMarc(_sd.rigori_sbagliati, 'rigori_sbagliati');
 
             const gmDelta = {};
-            for (const [k, delta] of Object.entries(sessionDeltas.gm)) {
-                const sepIdx = k.indexOf('||');
-                const nome = k.substring(0, sepIdx);
-                const field = k.substring(sepIdx + 2);
-                if (!gmDelta[nome]) gmDelta[nome] = { gol_fatti:0, rigori_tirati:0 };
+            for (const [k, delta] of Object.entries(_sd.gm)) {
+                const si = k.indexOf('||');
+                const nome = k.substring(0,si), field = k.substring(si+2);
+                if (!gmDelta[nome]) gmDelta[nome] = {gol_fatti:0,rigori_tirati:0};
                 gmDelta[nome][field] = delta;
             }
 
             const portDelta = {};
-            for (const [k, delta] of Object.entries(sessionDeltas.portiere)) {
-                const sepIdx = k.indexOf('||');
-                const nome = k.substring(0, sepIdx);
-                const field = k.substring(sepIdx + 2);
-                if (!portDelta[nome]) portDelta[nome] = { gol_subiti:0, rigori_parati:0, rigori_gm_parati:0, gol_fatti:0 };
+            for (const [k, delta] of Object.entries(_sd.portiere)) {
+                const si = k.indexOf('||');
+                const nome = k.substring(0,si), field = k.substring(si+2);
+                if (!portDelta[nome]) portDelta[nome] = {gol_subiti:0,rigori_parati:0,rigori_gm_parati:0,gol_fatti:0};
                 portDelta[nome][field] = delta;
             }
 
-            // Delta classifica dalla singola partita
             const clDelta = {};
             Object.keys(classificaSquadre).forEach(sq => {
-                clDelta[sq] = { punti:0, partite:0, vittorie:0, pareggi:0, sconfitte:0, gol_fatti:0, gol_subiti:0, diff_reti:0 };
+                clDelta[sq] = {punti:0,partite:0,vittorie:0,pareggi:0,sconfitte:0,gol_fatti:0,gol_subiti:0,diff_reti:0};
             });
-            // Calcola delta per home e away
-            const hG = homeGol, aG = awayGol;
-            clDelta[home].partite = 1; clDelta[away].partite = 1;
-            clDelta[home].gol_fatti = hG; clDelta[home].gol_subiti = aG;
-            clDelta[away].gol_fatti = aG; clDelta[away].gol_subiti = hG;
-            clDelta[home].diff_reti = hG - aG; clDelta[away].diff_reti = aG - hG;
-            if (hG > aG) {
-                clDelta[home].punti = 3; clDelta[home].vittorie = 1; clDelta[away].sconfitte = 1;
-            } else if (aG > hG) {
-                clDelta[away].punti = 3; clDelta[away].vittorie = 1; clDelta[home].sconfitte = 1;
-            } else {
-                clDelta[home].punti = 1; clDelta[home].pareggi = 1;
-                clDelta[away].punti = 1; clDelta[away].pareggi = 1;
-            }
+            clDelta[_home].partite=1; clDelta[_away].partite=1;
+            clDelta[_home].gol_fatti=_hG; clDelta[_home].gol_subiti=_aG;
+            clDelta[_away].gol_fatti=_aG; clDelta[_away].gol_subiti=_hG;
+            clDelta[_home].diff_reti=_hG-_aG; clDelta[_away].diff_reti=_aG-_hG;
+            if (_hG > _aG)      { clDelta[_home].punti=3; clDelta[_home].vittorie=1; clDelta[_away].sconfitte=1; }
+            else if (_aG > _hG) { clDelta[_away].punti=3; clDelta[_away].vittorie=1; clDelta[_home].sconfitte=1; }
+            else                { clDelta[_home].punti=1; clDelta[_home].pareggi=1; clDelta[_away].punti=1; clDelta[_away].pareggi=1; }
 
             const data = {
                 classificaDelta: clDelta,
                 marcatoriDelta,
                 gmDelta,
                 portDelta,
-                match: { home, away, sH: hG, sA: aG, giornata, idx }
+                match: { home: _home, away: _away, sH: _hG, sA: _aG }
             };
 
             syncToSheets(pwd, data)
@@ -823,12 +806,17 @@
                     const p = portieriMap.get(nome); if(p) { p[field] = (p[field]||0) + delta; portieriMap.set(nome, p); }
                 }
                 saveState();
-
                 partiteSalvate.set(`${giornata}_${idx}`, true);
                 saveState();
+
+                // Cattura i valori PRIMA di azzerare
+                const _home = home, _away = away;
+                const _hG = homeGol, _aG = awayGol;
+                const _sessionDeltas = JSON.parse(JSON.stringify(sessionDeltas));
+
                 homeGol = 0; awayGol = 0; updateUI();
                 render();
-                showSyncModal();
+                showSyncModal(_home, _away, _hG, _aG, _sessionDeltas);
             };
         });
     }
