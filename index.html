@@ -404,11 +404,73 @@
             btn.textContent = "⏳ Sincronizzazione...";
             btn.disabled = true;
 
+            // Manda solo i delta della singola partita
+            const marcatoriDelta = {};
+            for (const [nome, delta] of Object.entries(sessionDeltas.gol)) {
+                if (!marcatoriDelta[nome]) marcatoriDelta[nome] = { gol:0, gialli:0, rossi:0, autogol:0, rigori_sbagliati:0 };
+                marcatoriDelta[nome].gol = delta;
+            }
+            for (const [nome, delta] of Object.entries(sessionDeltas.gialli)) {
+                if (!marcatoriDelta[nome]) marcatoriDelta[nome] = { gol:0, gialli:0, rossi:0, autogol:0, rigori_sbagliati:0 };
+                marcatoriDelta[nome].gialli = delta;
+            }
+            for (const [nome, delta] of Object.entries(sessionDeltas.rossi)) {
+                if (!marcatoriDelta[nome]) marcatoriDelta[nome] = { gol:0, gialli:0, rossi:0, autogol:0, rigori_sbagliati:0 };
+                marcatoriDelta[nome].rossi = delta;
+            }
+            for (const [nome, delta] of Object.entries(sessionDeltas.autogol)) {
+                if (!marcatoriDelta[nome]) marcatoriDelta[nome] = { gol:0, gialli:0, rossi:0, autogol:0, rigori_sbagliati:0 };
+                marcatoriDelta[nome].autogol = delta;
+            }
+            for (const [nome, delta] of Object.entries(sessionDeltas.rigori_sbagliati)) {
+                if (!marcatoriDelta[nome]) marcatoriDelta[nome] = { gol:0, gialli:0, rossi:0, autogol:0, rigori_sbagliati:0 };
+                marcatoriDelta[nome].rigori_sbagliati = delta;
+            }
+
+            const gmDelta = {};
+            for (const [k, delta] of Object.entries(sessionDeltas.gm)) {
+                const sepIdx = k.indexOf('||');
+                const nome = k.substring(0, sepIdx);
+                const field = k.substring(sepIdx + 2);
+                if (!gmDelta[nome]) gmDelta[nome] = { gol_fatti:0, rigori_tirati:0 };
+                gmDelta[nome][field] = delta;
+            }
+
+            const portDelta = {};
+            for (const [k, delta] of Object.entries(sessionDeltas.portiere)) {
+                const sepIdx = k.indexOf('||');
+                const nome = k.substring(0, sepIdx);
+                const field = k.substring(sepIdx + 2);
+                if (!portDelta[nome]) portDelta[nome] = { gol_subiti:0, rigori_parati:0, rigori_gm_parati:0, gol_fatti:0 };
+                portDelta[nome][field] = delta;
+            }
+
+            // Delta classifica dalla singola partita
+            const clDelta = {};
+            Object.keys(classificaSquadre).forEach(sq => {
+                clDelta[sq] = { punti:0, partite:0, vittorie:0, pareggi:0, sconfitte:0, gol_fatti:0, gol_subiti:0, diff_reti:0 };
+            });
+            // Calcola delta per home e away
+            const hG = homeGol, aG = awayGol;
+            clDelta[home].partite = 1; clDelta[away].partite = 1;
+            clDelta[home].gol_fatti = hG; clDelta[home].gol_subiti = aG;
+            clDelta[away].gol_fatti = aG; clDelta[away].gol_subiti = hG;
+            clDelta[home].diff_reti = hG - aG; clDelta[away].diff_reti = aG - hG;
+            if (hG > aG) {
+                clDelta[home].punti = 3; clDelta[home].vittorie = 1; clDelta[away].sconfitte = 1;
+            } else if (aG > hG) {
+                clDelta[away].punti = 3; clDelta[away].vittorie = 1; clDelta[home].sconfitte = 1;
+            } else {
+                clDelta[home].punti = 1; clDelta[home].pareggi = 1;
+                clDelta[away].punti = 1; clDelta[away].pareggi = 1;
+            }
+
             const data = {
-                classifica: classificaSquadre,
-                marcatori: Object.fromEntries(giocatoriMap),
-                gmStats: Object.fromEntries(gmMap),
-                portStats: Object.fromEntries(portieriMap)
+                classificaDelta: clDelta,
+                marcatoriDelta,
+                gmDelta,
+                portDelta,
+                match: { home, away, sH: hG, sA: aG, giornata, idx }
             };
 
             syncToSheets(pwd, data)
@@ -467,41 +529,41 @@
     };
 
     const marcatoriRaw = [
-        { nome: "Davide Paoloni", squadra: "Goal Diggers", gol: 18, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Samuele Bertino", squadra: "LG Warriors", gol: 15, gialli: 0, rossi: 0, autogol: 1, rigori_sbagliati: 0 },
-        { nome: "Pietro Crosta", squadra: "Zambo Venom", gol: 15, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Luca Franco", squadra: "Cavalli Pazzi", gol: 10, gialli: 1, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Andrea Caiazzo", squadra: "Zambo Venom", gol: 10, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Lapo Tapinassi", squadra: "Iubisoft", gol: 10, gialli: 1, rossi: 0, autogol: 1, rigori_sbagliati: 0 },
-        { nome: "Mattia Reggio d'Aci", squadra: "Super Sonic", gol: 9, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Carlo Silenzi", squadra: "Lotta Tigres", gol: 9, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Federico Gerlach", squadra: "Tuorlo Sodo", gol: 9, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Biagio Gangarossa", squadra: "LG Warriors", gol: 8, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Giosuè Pinto", squadra: "Super Sonic", gol: 7, gialli: 0, rossi: 0, autogol: 1, rigori_sbagliati: 0 },
-        { nome: "Giuseppe Barberi", squadra: "Cavalli Pazzi", gol: 6, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Pierpaolo Romano", squadra: "Tuorlo Sodo", gol: 6, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Leonardo Ballista", squadra: "LG Warriors", gol: 6, gialli: 0, rossi: 0, autogol: 1, rigori_sbagliati: 0 },
-        { nome: "Filippo Toracchio", squadra: "Iubisoft", gol: 5, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Giuliano Guido", squadra: "Super Sonic", gol: 5, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Salvatore Gaetani", squadra: "Goal Diggers", gol: 4, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Luca Montaresi", squadra: "Iubisoft", gol: 4, gialli: 1, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Leonardo Marras", squadra: "Super Sonic", gol: 3, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Enrico Guerrini", squadra: "Tuorlo Sodo", gol: 3, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Alessandro Bottazzi", squadra: "Goal Diggers", gol: 3, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Francesco Buscemi", squadra: "Goal Diggers", gol: 3, gialli: 1, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Matteo Soro", squadra: "Tuorlo Sodo", gol: 3, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Mario Gazzaneo", squadra: "Cavalli Pazzi", gol: 3, gialli: 0, rossi: 0, autogol: 1, rigori_sbagliati: 0 },
-        { nome: "Giuseppe Dovì", squadra: "Lotta Tigres", gol: 2, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Giuseppe Fiorentino", squadra: "Lotta Tigres", gol: 2, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Aldo Tarantino", squadra: "Iubisoft", gol: 2, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Giuseppe Gargano", squadra: "Iubisoft", gol: 1, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Alberto Cifelli", squadra: "Zambo Venom", gol: 1, gialli: 1, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Enrico Lastella", squadra: "Lotta Tigres", gol: 1, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Davide Paoloni", squadra: "Goal Diggers", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Samuele Bertino", squadra: "LG Warriors", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Pietro Crosta", squadra: "Zambo Venom", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Luca Franco", squadra: "Cavalli Pazzi", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Andrea Caiazzo", squadra: "Zambo Venom", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Lapo Tapinassi", squadra: "Iubisoft", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Mattia Reggio d'Aci", squadra: "Super Sonic", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Carlo Silenzi", squadra: "Lotta Tigres", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Federico Gerlach", squadra: "Tuorlo Sodo", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Biagio Gangarossa", squadra: "LG Warriors", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Giosuè Pinto", squadra: "Super Sonic", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Giuseppe Barberi", squadra: "Cavalli Pazzi", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Pierpaolo Romano", squadra: "Tuorlo Sodo", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Leonardo Ballista", squadra: "LG Warriors", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Filippo Toracchio", squadra: "Iubisoft", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Giuliano Guido", squadra: "Super Sonic", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Salvatore Gaetani", squadra: "Goal Diggers", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Luca Montaresi", squadra: "Iubisoft", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Leonardo Marras", squadra: "Super Sonic", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Enrico Guerrini", squadra: "Tuorlo Sodo", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Alessandro Bottazzi", squadra: "Goal Diggers", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Francesco Buscemi", squadra: "Goal Diggers", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Matteo Soro", squadra: "Tuorlo Sodo", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Mario Gazzaneo", squadra: "Cavalli Pazzi", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Giuseppe Dovì", squadra: "Lotta Tigres", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Giuseppe Fiorentino", squadra: "Lotta Tigres", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Aldo Tarantino", squadra: "Iubisoft", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Giuseppe Gargano", squadra: "Iubisoft", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Alberto Cifelli", squadra: "Zambo Venom", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Enrico Lastella", squadra: "Lotta Tigres", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
         { nome: "Aodhan Ganson Perrin", squadra: "Lotta Tigres", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
         { nome: "Sofia D'Arcangelo", squadra: "Super Sonic", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Emmanuel Bastié", squadra: "Goal Diggers", gol: 0, gialli: 1, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Marco Troncone", squadra: "Zambo Venom", gol: 0, gialli: 1, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
-        { nome: "Edoardo Coscia", squadra: "Zambo Venom", gol: 0, gialli: 0, rossi: 0, autogol: 1, rigori_sbagliati: 0 },
+        { nome: "Emmanuel Bastié", squadra: "Goal Diggers", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Marco Troncone", squadra: "Zambo Venom", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
+        { nome: "Edoardo Coscia", squadra: "Zambo Venom", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
         { nome: "Matteo Mariani", squadra: "LG Warriors", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
         { nome: "Matteo Balestriere", squadra: "LG Warriors", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
         { nome: "Casati Niccolò", squadra: "Tuorlo Sodo", gol: 0, gialli: 0, rossi: 0, autogol: 0, rigori_sbagliati: 0 },
@@ -510,14 +572,14 @@
     ];
 
     const portieriRaw = [
-        { nome: "Luca Devalle", squadra: "Goal Diggers", gol_subiti: 18, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 3, clean_sheet: 0 },
-        { nome: "John Perrino", squadra: "Zambo Venom", gol_subiti: 19, rigori_parati: 0, rigori_gm_parati: 1, gol_fatti: 0, clean_sheet: 0 },
-        { nome: "Flavio Spadaro", squadra: "Super Sonic", gol_subiti: 22, rigori_parati: 1, rigori_gm_parati: 1, gol_fatti: 0, clean_sheet: 0 },
-        { nome: "Alessandro Gadaleta", squadra: "Tuorlo Sodo", gol_subiti: 23, rigori_parati: 0, rigori_gm_parati: 3, gol_fatti: 0, clean_sheet: 0 },
-        { nome: "Alessio De Angelis", squadra: "Iubisoft", gol_subiti: 25, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 },
-        { nome: "Stefano Marchetti", squadra: "Cavalli Pazzi", gol_subiti: 25, rigori_parati: 0, rigori_gm_parati: 1, gol_fatti: 0, clean_sheet: 0 },
-        { nome: "Mattia D'Andria", squadra: "Lotta Tigres", gol_subiti: 29, rigori_parati: 0, rigori_gm_parati: 2, gol_fatti: 0, clean_sheet: 0 },
-        { nome: "Luigi Baldi", squadra: "LG Warriors", gol_subiti: 43, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 }
+        { nome: "Luca Devalle", squadra: "Goal Diggers", gol_subiti: 0, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "John Perrino", squadra: "Zambo Venom", gol_subiti: 0, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Flavio Spadaro", squadra: "Super Sonic", gol_subiti: 0, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Alessandro Gadaleta", squadra: "Tuorlo Sodo", gol_subiti: 0, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Alessio De Angelis", squadra: "Iubisoft", gol_subiti: 0, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Stefano Marchetti", squadra: "Cavalli Pazzi", gol_subiti: 0, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Mattia D'Andria", squadra: "Lotta Tigres", gol_subiti: 0, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 },
+        { nome: "Luigi Baldi", squadra: "LG Warriors", gol_subiti: 0, rigori_parati: 0, rigori_gm_parati: 0, gol_fatti: 0, clean_sheet: 0 }
     ];
 
     const gmRaw = [
@@ -541,17 +603,7 @@
     function initData() {
         SQUADRE.forEach(s => {
             // Dati storici precaricati dall'Excel
-            const initCL = {
-                "Goal Diggers":  {punti:15,partite:6,vittorie:5,pareggi:0,sconfitte:1,gol_fatti:33,gol_subiti:18,diff_reti:15},
-                "Zambo Venom":   {punti:13,partite:6,vittorie:4,pareggi:1,sconfitte:1,gol_fatti:27,gol_subiti:19,diff_reti:8},
-                "Tuorlo Sodo":   {punti:10,partite:6,vittorie:3,pareggi:1,sconfitte:2,gol_fatti:26,gol_subiti:23,diff_reti:3},
-                "LG Warriors":   {punti:9, partite:6,vittorie:3,pareggi:0,sconfitte:3,gol_fatti:31,gol_subiti:43,diff_reti:-12},
-                "Iubisoft":      {punti:8, partite:7,vittorie:2,pareggi:2,sconfitte:3,gol_fatti:23,gol_subiti:25,diff_reti:-2},
-                "Super Sonic":   {punti:6, partite:6,vittorie:2,pareggi:0,sconfitte:4,gol_fatti:27,gol_subiti:26,diff_reti:1},
-                "Cavalli Pazzi": {punti:4, partite:5,vittorie:1,pareggi:1,sconfitte:3,gol_fatti:21,gol_subiti:25,diff_reti:-4},
-                "Lotta Tigres":  {punti:4, partite:6,vittorie:1,pareggi:1,sconfitte:4,gol_fatti:20,gol_subiti:29,diff_reti:-9}
-            };
-            classificaSquadre[s] = initCL[s] ? {...initCL[s]} : {
+            classificaSquadre[s] = {
                 punti: 0, partite: 0, vittorie: 0, pareggi: 0, sconfitte: 0,
                 gol_fatti: 0, gol_subiti: 0, diff_reti: 0
             };
@@ -576,11 +628,11 @@
             gm: Array.from(gmMap.entries()),
             partiteSalvate: Array.from(partiteSalvate.entries())
         };
-        localStorage.setItem("campionatoState_v3", JSON.stringify(state));
+        localStorage.setItem("campionatoState_v5", JSON.stringify(state));
     }
 
     function loadState() {
-        const saved = localStorage.getItem("campionatoState_v3");
+        const saved = localStorage.getItem("campionatoState_v5");
         if (!saved) return false;
         try {
             const state = JSON.parse(saved);
