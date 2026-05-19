@@ -360,7 +360,7 @@
 
 <script>
     // -------------------- GOOGLE SHEETS SYNC --------------------
-    const APPS_URL = "https://script.google.com/macros/s/AKfycbyc4LGPChlXE_6iGhTJYjHCzdO1p5uck5d_8KPSlmAI_bVqG6WwN6S3vdjG6U5gExlz/exec";
+    const APPS_URL = "https://script.google.com/macros/library/d/1Kt5fv8mSU0z_9E1VdyNzM2F7BpE1Wfa0QUcoKdyMVDgRzTRguXsWRn3k/14";
 
     async function syncToSheets(password, data) {
         // text/plain non triggera preflight CORS — Apps Script riceve il body
@@ -461,7 +461,7 @@
                     btn.classList.remove("loading");
                     btn.classList.add("ok");
                     btn.textContent = "✓ Sincronizzato!";
-                    setTimeout(() => { overlay.remove(); if(onConfirm) onConfirm(); }, 1200);
+                    setTimeout(() => { overlay.remove(); }, 1200);
                 })
                 .catch(e => {
                     btn.classList.remove("loading");
